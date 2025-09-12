@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Block Craft</title>
+
+<!-- favicon -->
+<link rel="icon" href="fa.png" type="image/png">
+
+<style>
+  :root{--bg:#0b1220;--panel:#071522;--accent:#ffd66b}
+  html,body{height:100%;margin:0;background:var(--bg);color:#e6eef8;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+  .wrap{display:flex;gap:20px;align-items:flex-start;justify-content:center;padding:28px}
+  .board{background:linear-gradient(180deg,#081624,#061220);padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);position:relative}
+  .hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;width:740px}
+  .btn{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;color:#081018;font-weight:700;cursor:pointer}
+  canvas{background:#071423;border-radius:8px;display:block;touch-action:none}
+  .right{width:300px;padding:14px;background:#071322;border-radius:12px}
+  .small{font-size:13px;color:#9fb0cc}
+  .toast-wrap{position:fixed;left:50%;transform:translateX(-50%);top:18px;pointer-events:none;z-index:60}
+  .toast{background:rgba(0,0,0,0.55);color:#fff;padding:8px 12px;border-radius:8px;margin-top:8px;opacity:0;transform:translateY(-8px) scale(.98);transition:all .28s cubic-bezier(.2,.9,.2,1)}
+  .toast.show{opacity:1;transform:translateY(0) scale(1)}
+  .canvas-wrap{width:740px;display:flex;justify-content:center}
+  .shake{animation:shake .36s ease-in-out}
+  @keyframes shake{0%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}100%{transform:translateX(0)}}
+  .next-row{display:flex;gap:12px;margin-top:8px}
+  .next-slot{width:120px;height:120px;background:#06101a;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 6px rgba(0,0,0,0.6)}
+  .label{font-size:12px;color:#9fb0cc;margin-top:8px}
+  .hud-left{display:flex;flex-direction:column;gap:6px}
+  .hud-right{display:flex;gap:12px;align-items:center}
+  .footer{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:10px;color:#9fb0cc;font-size:13px}
+  .footer img{height:28px;width:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="board">
+    <div class="hud">
+      <div class="hud-left">
+        <div style="font-weight:800;font-size:18px">Block Craft</div>
+        <div class="small">Xoay: <strong>Space</strong>Game được code bởi Táo Đỏ ( Táo Bắc Việt Team )</div>
+      </div>
+      <div class="hud-right">
+        <div class="small">Score: <strong id="score">0</strong></div>
+        <div class="small">High: <strong id="highscore">0</strong></div>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="game" width="740" height="820"></canvas>
+    </div>
+
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div class="small">Next pieces (kéo để đặt)</div>
+      <div class="next-row" id="nextRow"></div>
+    </div>
+
+    <!-- bản quyền + logo -->
+    <div class="footer">
+      <img src="logo.png" alt="Táo Bắc Việt Team Logo">
+      <span>© Táo Bắc Việt Team — Block Craft</span>
+    </div>
+  </div>
+
+  <div class="right">
+    <div style="font-weight:700">Tips</div>
+    <div class="small" style="margin-top:6px">
+      • Chúc mọi người chơi game vui vẻ<br>
+      • Nhạc nền : Táo Đỏ và NVT Studio cùng phối hợp thực hiện<br>
+      • Logic game : Game được lấy ý tưởng từ Block Blast nhưng đã được cải tiến thêm bởi Nguyễn Vũ Tạo ( Táo Bắc Việt Team )<br>
+      • Code game : Được code chủ yếu bởi Táo Đỏ ( Táo Bắc Việt Team ) với sự phối hợp NVT Studio cung cấp thiết bị code <br>
+      • Mọi người có ý kiến gì xin hãy liên hệ chúng tôi qua gmail : taobacvietteam@gmail.com<br>
+      • Một sản phẩm con của hệ thống game GAMENIME của Táo Bắc Việt Team 
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- nhạc nền -->
+<audio id="bgMusic" src="bc.mp3" loop preload="auto"></audio>
+
+<script>
+  // chạy nhạc nền khi người chơi nhấn chuột lần đầu (tương thích browser)
+  const bgMusic = document.getElementById('bgMusic');
+  let musicStarted = false;
+  window.addEventListener('pointerdown', () => {
+    if(!musicStarted){
+      bgMusic.volume = 0.4;
+      bgMusic.play().catch(()=>{});
+      musicStarted = true;
+    }
+  }, {once:true});
+</script>
+
+<script>
+/*
+ Full Block Puzzle 9x9 — Rainbow slide + WebAudio + Particles + HighScore + Combo
+*/
+(() => {
+  // CONFIG
+  const GRID = 9;
+  const CELL = 56;
+  const OFFSET = 10;
+  const BOARD_W = GRID * CELL;
+  const BOARD_H = GRID * CELL;
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const canvasWrap = document.getElementById('canvasWrap');
+  const scoreEl = document.getElementById('score');
+  const highEl = document.getElementById('highscore');
+  const resetBtn = document.getElementById('reset');
+  const toastWrap = document.getElementById('toastWrap');
+  const nextRow = document.getElementById('nextRow');
+
+  canvas.width = BOARD_W + OFFSET*2 + 120; // extra space right for next pieces visuals
+  canvas.height = BOARD_H + OFFSET*2 + 200;
+
+  // palette & shapes
+  const PALETTE = ['#FF6B6B','#FF9F43','#FFD66B','#9AE66A','#6BCBFF','#6B8CFF','#C27BFF'];
+  const SHAPES = [
+    [[1,1]],              // 2
+    [[1,1,1]],            // 3
+    [[1,1],[1,1]],        // 2x2
+    [[1,0],[1,0],[1,1]],  // L
+    [[0,1],[0,1],[1,1]],  // J
+    [[1,1,1],[1,0,0]],    // L rotated
+    [[1,1,1],[0,0,1]],    // J rotated
+    [[1,1,1],[0,1,0]],    // T
+    [[1,1,0],[0,1,1]],    // Z
+    [[0,1,1],[1,1,0]],    // S
+    [[1,0],[1,1]],        // corner
+    [[0,1],[1,1]]         // corner other
+  ];
+
+  // state
+  let grid = [];
+  let pieces = []; // waiting pieces (3)
+  let score = 0;
+  let highScore = 0;
+  let dragging = null;
+  let anims = []; // rainbow slide animations
+  let particles = []; // particle array
+  let returnAnim = null;
+  let gameOver = false;
+  let shakeTimeout = null;
+
+  // audio using WebAudio
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  function playClick(){
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 900;
+    g.gain.value = 0.0001;
+    o.connect(g); g.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    g.gain.linearRampToValueAtTime(0.12, now+0.001);
+    o.start(now); o.frequency.exponentialRampToValueAtTime(1300, now+0.06);
+    g.gain.exponentialRampToValueAtTime(0.0001, now+0.22);
+    o.stop(now+0.25);
+  }
+  function playClear(){
+    const now = audioCtx.currentTime;
+    const freqs = [420,600,780];
+    freqs.forEach((f,i)=>{
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.value = f;
+      g.gain.value = 0.0001;
+      o.connect(g); g.connect(audioCtx.destination);
+      g.gain.linearRampToValueAtTime(0.18/(i+1), now+0.001);
+      g.gain.exponentialRampToValueAtTime(0.0001, now+0.6);
+      o.start(now); o.stop(now+0.6);
+    });
+  }
+
+  // helpers
+  function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
+  function randColor(){ return PALETTE[Math.floor(Math.random()*PALETTE.length)]; }
+  function randShape(){ return deepClone(SHAPES[Math.floor(Math.random()*SHAPES.length)]); }
+  function rotateMatrix(m){
+    const R = m.length, C = m[0].length;
+    const out = Array(C).fill().map(()=>Array(R).fill(0));
+    for(let r=0;r<R;r++) for(let c=0;c<C;c++) out[c][R-1-r] = m[r][c];
+    return out;
+  }
+
+  // HighScore
+  function loadHigh(){ const h = parseInt(localStorage.getItem('bp_highscore')||'0',10); highScore = isNaN(h)?0:h; highEl.textContent = highScore; }
+  function saveHighIfNeeded(){ if(score > highScore){ highScore = score; localStorage.setItem('bp_highscore', String(highScore)); highEl.textContent = highScore; showToast('🏆 New High Score: ' + highScore, 1800); } }
+
+  // init/reset
+  function reset(){
+    grid = Array(GRID).fill().map(()=>Array(GRID).fill(0));
+    score = 0; scoreEl.textContent = score;
+    gameOver = false; anims=[]; particles=[]; dragging=null;
+    loadHigh();
+    generatePieces();
+    populateNextRow();
+    draw();
+  }
+
+  function generatePieces(){
+    pieces = [];
+    for(let i=0;i<3;i++){
+      const s = randShape();
+      const c = randColor();
+      const x = OFFSET + 60 + i*180;
+      const y = OFFSET + BOARD_H + 36;
+      pieces.push({ shape: s, color: c, x, y, spawnX: x, spawnY: y });
+    }
+    // immediate check if no moves possible -> game over
+    if(!hasAnyMoveForPieces(pieces)){
+      showToast('❌ Không còn chỗ đặt — GAME OVER', 1800);
+      gameOver = true;
+      saveHighIfNeeded();
+    }
+  }
+
+  // drawing
+  function draw(){
+    // background
+    ctx.fillStyle = '#071423';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    const bx = OFFSET, by = OFFSET, bw = BOARD_W, bh = BOARD_H;
+    // board bg
+    ctx.fillStyle = '#061221';
+    roundRectFill(bx-6,by-6,bw+12,bh+12,12);
+    ctx.fillStyle = '#04101a';
+    roundRectFill(bx,by,bw,bh,8);
+
+    // cells
+    for(let r=0;r<GRID;r++){
+      for(let c=0;c<GRID;c++){
+        const x = bx + c*CELL, y = by + r*CELL;
+        ctx.fillStyle = grid[r][c] ? grid[r][c] : 'rgba(255,255,255,0.02)';
+        roundRectFill(x+4,y+4,CELL-8,CELL-8,6);
+        ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+        ctx.strokeRect(x+4,y+4,CELL-8,CELL-8);
+      }
+    }
+
+    // rainbow slide animations
+    anims.forEach(a => {
+      const p = Math.min((performance.now()-a.start)/a.dur,1);
+      if(a.type === 'row'){
+        const ry = by + a.index*CELL + 4;
+        const gx1 = bx + ( - (1-p) * (BOARD_W) );
+        const gx2 = gx1 + BOARD_W*1.2;
+        const g = ctx.createLinearGradient(gx1, ry, gx2, ry + CELL - 8);
+        const stops = [0,0.14,0.28,0.42,0.56,0.7,0.86,1.0];
+        stops.forEach((s,i)=>{
+          const hue = (i*360/stops.length + p*360) % 360;
+          g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`);
+        });
+        ctx.fillStyle = g;
+        roundRectFill(bx+4, ry, BOARD_W-8, CELL-8, 6);
+      } else if(a.type === 'col'){
+        const cx = bx + a.index*CELL + 4;
+        const gy1 = by + ( - (1-p) * (BOARD_H) );
+        const gy2 = gy1 + BOARD_H*1.2;
+        const g = ctx.createLinearGradient(cx, gy1, cx + CELL - 8, gy2);
+        const stops = [0,0.14,0.28,0.42,0.56,0.7,0.86,1.0];
+        stops.forEach((s,i)=>{
+          const hue = (i*360/stops.length + p*360) % 360;
+          g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`);
+        });
+        ctx.fillStyle = g;
+        roundRectFill(cx, by+4, CELL-8, BOARD_H-8, 6);
+      }
+    });
+    anims = anims.filter(a => (performance.now()-a.start) < a.dur);
+
+    // particles
+    updateAndDrawParticles();
+
+    // draw waiting pieces area frames (right of board)
+    pieces.forEach((p, i) => {
+      drawPiece(p, false);
+    });
+
+    // dragging on top
+    if(dragging) drawPiece(dragging, true);
+  }
+
+  function roundRectFill(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawPiece(p, isDragging){
+    const shape = p.shape;
+    const px = p.x, py = p.y;
+    for(let r=0;r<shape.length;r++){
+      for(let c=0;c<shape[0].length;c++){
+        if(shape[r][c]){
+          const x = px + c*CELL;
+          const y = py + r*CELL;
+          // shadow
+          ctx.fillStyle = 'rgba(0,0,0,0.36)';
+          roundRectFill(x+6,y+10,CELL-14,CELL-14,8);
+          // color
+          ctx.fillStyle = p.color;
+          roundRectFill(x+4,y+4,CELL-18,CELL-18,8);
+          // shine
+          ctx.fillStyle = 'rgba(255,255,255,0.12)';
+          ctx.fillRect(x+10,y+10,(CELL-28)*0.6,8);
+        }
+      }
+    }
+    // preview overlay if dragging
+    if(isDragging){
+      const col = Math.floor((p.x - OFFSET)/CELL);
+      const row = Math.floor((p.y - OFFSET)/CELL);
+      const valid = canPlaceAt(p.shape, row, col);
+      if(row !== null && col !== null){
+        for(let r=0;r<p.shape.length;r++){
+          for(let c=0;c<p.shape[0].length;c++){
+            if(p.shape[r][c]){
+              const gx = OFFSET + (col+c)*CELL + 4;
+              const gy = OFFSET + (row+r)*CELL + 4;
+              ctx.globalAlpha = valid ? 0.28 : 0.16;
+              ctx.fillStyle = valid ? '#9ef6ff' : '#ff9e9e';
+              roundRectFill(gx, gy, CELL-8, CELL-8, 6);
+              ctx.globalAlpha = 1;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // placement check
+  function canPlaceAt(shape, row, col){
+    if(row === null || col === null) return false;
+    for(let r=0;r<shape.length;r++){
+      for(let c=0;c<shape[0].length;c++){
+        if(shape[r][c]){
+          const rr = row + r, cc = col + c;
+          if(rr < 0 || cc < 0 || rr >= GRID || cc >= GRID) return false;
+          if(grid[rr][cc]) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // place and handle clearing, particles, combo
+  function placePieceAt(p, row, col){
+    // place pieces and record colors for particle spawn before clearing
+    const placedCells = [];
+    for(let r=0;r<p.shape.length;r++){
+      for(let c=0;c<p.shape[0].length;c++){
+        if(p.shape[r][c]){
+          const rr = row+r, cc = col+c;
+          grid[rr][cc] = p.color;
+          placedCells.push({r:rr,c:cc,color:p.color});
+        }
+      }
+    }
+    playClick();
+
+    // clear lines; but before zeroing row/col, collect cells to spawn particles from (we will spawn for cleared cells)
+    const preGridSnapshot = deepClone(grid);
+
+    const cleared = doClearLines(); // returns rows, cols, count; updates grid and score
+
+    // spawn particles for cleared cells (use colors from preGridSnapshot)
+    if(cleared.count > 0){
+      const spawnCells = [];
+      // rows cleared
+      cleared.rows.forEach(r=>{
+        for(let c=0;c<GRID;c++){
+          spawnCells.push({r,c,color: preGridSnapshot[r][c] || '#fff'});
+        }
+      });
+      // cols cleared
+      cleared.cols.forEach(c=>{
+        for(let r=0;r<GRID;r++){
+          spawnCells.push({r,c,color: preGridSnapshot[r][c] || '#fff'});
+        }
+      });
+      // spawn particles per cell (limit)
+      spawnCells.forEach(sc => spawnParticlesAtCell(sc.r, sc.c, sc.color));
+      // start rainbow animations
+      const now = performance.now();
+      cleared.rows.forEach(r=>anims.push({type:'row',index:r,start:now,dur:900}));
+      cleared.cols.forEach(c=>anims.push({type:'col',index:c,start:now,dur:900}));
+      playClear();
+
+      // combo toast: multiplier = max(1, linesCleared)
+      const linesCleared = Math.max(cleared.rows.length + cleared.cols.length, 1);
+      const multiplier = linesCleared;
+      const points = cleared.count * 12 * multiplier;
+      if(linesCleared > 1) showToast(`🔥 Combo x${multiplier} +${points} pts`, 1400);
+      else showToast(`✨ +${points} pts`, 1000);
+    } else {
+      // no clear — no particles
+    }
+
+    // after updating score, check highscore
+    saveHighIfNeeded();
+  }
+
+  // clearing rows/cols and scoring — returns info
+  function doClearLines(){
+    const clearedCells = [];
+    const rowsCleared = [];
+    const colsCleared = [];
+    // rows
+    for(let r=0;r<GRID;r++){
+      let full = true;
+      for(let c=0;c<GRID;c++) if(!grid[r][c]) full = false;
+      if(full){
+        rowsCleared.push(r);
+      }
+    }
+    // cols
+    for(let c=0;c<GRID;c++){
+      let full = true;
+      for(let r=0;r<GRID;r++) if(!grid[r][c]) full = false;
+      if(full){
+        colsCleared.push(c);
+      }
+    }
+    // collect clearedCells (dedupe)
+    const cellsMap = {};
+    rowsCleared.forEach(r => { for(let c=0;c<GRID;c++){ cellsMap[`${r}_${c}`]=true; }});
+    colsCleared.forEach(c => { for(let r=0;r<GRID;r++){ cellsMap[`${r}_${c}`]=true; }});
+    const keys = Object.keys(cellsMap);
+    keys.forEach(k => {
+      const [r,c] = k.split('_').map(Number);
+      clearedCells.push({r,c});
+      grid[r][c] = 0; // clear
+    });
+
+    if(clearedCells.length){
+      // combo multiplier = number of lines cleared (rows+cols), at least 1
+      const linesCount = Math.max(rowsCleared.length + colsCleared.length, 1);
+      const pts = clearedCells.length * 12 * linesCount;
+      score += pts;
+      scoreEl.textContent = score;
+    }
+
+    return { any: clearedCells.length>0, rows: rowsCleared, cols: colsCleared, count: clearedCells.length };
+  }
+
+  // spawn particles at a specific cell -> particles fly toward right edge (x target)
+  function spawnParticlesAtCell(r, c, color){
+    const baseX = OFFSET + c*CELL + CELL/2;
+    const baseY = OFFSET + r*CELL + CELL/2;
+    const targetX = OFFSET + BOARD_W + 60; // fly to right, near Next pieces area
+    // spawn ~6 particles
+    const n = 6;
+    for(let i=0;i<n;i++){
+      const angle = Math.atan2((Math.random()-0.5), (targetX - baseX)) + (Math.random()-0.15);
+      const speed = 2.2 + Math.random()*2.2;
+      particles.push({
+        x: baseX,
+        y: baseY,
+        vx: Math.cos(angle) * speed + (0.8*Math.random()),
+        vy: (Math.random()-0.5) * 2.2,
+        alpha: 1,
+        life: 800 + Math.random()*400,
+        born: performance.now(),
+        color: color
+      });
+    }
+  }
+
+  function updateAndDrawParticles(){
+    const now = performance.now();
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      const t = now - p.born;
+      const life = p.life;
+      if(t > life){ particles.splice(i,1); continue; }
+      // simple physics
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha = 1 - (t / life);
+      // draw particle
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.color;
+      const s = 6 * (0.6 + 0.6*Math.random());
+      ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // checks for moves (consider rotations)
+  function hasAnyMoveForPieces(checkPieces){
+    for(const p of checkPieces){
+      let s = deepClone(p.shape);
+      for(let r=0;r<4;r++){
+        for(let rr=0;rr<GRID;rr++){
+          for(let cc=0;cc<GRID;cc++){
+            if(canPlaceAt(s, rr, cc)) return true;
+          }
+        }
+        s = rotateMatrix(s);
+      }
+    }
+    return false;
+  }
+
+  // input handling (pointer)
+  let pointerOffset = {x:0,y:0};
+  canvas.addEventListener('pointerdown', (e) => {
+    if(gameOver) return;
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for(let i=0;i<pieces.length;i++){
+      const p = pieces[i];
+      const w = p.shape[0].length * CELL;
+      const h = p.shape.length * CELL;
+      if(mx >= p.x && mx <= p.x + w && my >= p.y && my <= p.y + h){
+        dragging = { ...deepClone(p), index:i, spawnX:p.spawnX, spawnY:p.spawnY };
+        pieces.splice(i,1);
+        pointerOffset.x = mx - p.x; pointerOffset.y = my - p.y;
+        draw();
+        break;
+      }
+    }
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if(!dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    dragging.x = mx - pointerOffset.x;
+    dragging.y = my - pointerOffset.y;
+    draw();
+  });
+
+  canvas.addEventListener('pointerup', (e) => {
+    if(!dragging) return;
+    const col = Math.floor((dragging.x - OFFSET) / CELL);
+    const row = Math.floor((dragging.y - OFFSET) / CELL);
+    if(canPlaceAt(dragging.shape, row, col)){
+      placePieceAt(dragging, row, col);
+      // if no pieces left, spawn new set
+      if(pieces.length === 0) {
+        generatePieces();
+      } else {
+        if(!hasAnyMoveForPieces(pieces)){
+          generatePieces();
+        }
+      }
+      // check game over
+      if(!hasAnyMoveForPieces(pieces)){
+        showToast('❌ Không còn chỗ — GAME OVER', 2000);
+        gameOver = true;
+        saveHighIfNeeded();
+      }
+      dragging = null;
+      populateNextRow();
+      draw();
+    } else {
+      triggerShake();
+      animateReturnAndRestore(dragging);
+    }
+  });
+
+  // rotate while dragging (Space)
+  window.addEventListener('keydown', (e) => {
+    if(!dragging) return;
+    if(e.code === 'Space' || e.key === ' '){
+      e.preventDefault();
+      dragging.shape = rotateMatrix(dragging.shape);
+      draw();
+    } else if(e.code === 'KeyR'){
+      dragging.shape = rotateMatrix(dragging.shape);
+      draw();
+    }
+  });
+
+  function animateReturnAndRestore(obj){
+    const from = {x: obj.x, y: obj.y};
+    const to = {x: obj.spawnX, y: obj.spawnY};
+    const start = performance.now();
+    const dur = 260;
+    function anim(now){
+      const t = Math.min((now-start)/dur,1);
+      const ease = t<.5 ? 2*t*t : -1 + (4 - 2*t)*t;
+      obj.x = from.x + (to.x - from.x) * ease;
+      obj.y = from.y + (to.y - from.y) * ease;
+      draw();
+      if(t < 1) requestAnimationFrame(anim);
+      else {
+        pieces.push({
+          shape: obj.shape,
+          color: obj.color,
+          x: obj.spawnX, y: obj.spawnY, spawnX: obj.spawnX, spawnY: obj.spawnY
+        });
+        dragging = null;
+        populateNextRow();
+        draw();
+      }
+    }
+    requestAnimationFrame(anim);
+  }
+
+  // shake
+  function triggerShake(){
+    canvasWrap.classList.add('shake');
+    if(shakeTimeout) clearTimeout(shakeTimeout);
+    shakeTimeout = setTimeout(()=> canvasWrap.classList.remove('shake'), 360);
+  }
+
+  // toast
+  function showToast(text, dur=1400){
+    const d = document.createElement('div');
+    d.className = 'toast';
+    d.textContent = text;
+    toastWrap.appendChild(d);
+    requestAnimationFrame(()=> d.classList.add('show'));
+    setTimeout(()=> { d.classList.remove('show'); setTimeout(()=> d.remove(), 300); }, dur);
+  }
+
+  // populate next pieces UI
+  function populateNextRow(){
+    nextRow.innerHTML = '';
+    for(let i=0;i<3;i++){
+      const p = pieces[i];
+      const slot = document.createElement('div');
+      slot.className = 'next-slot';
+      const c = document.createElement('canvas');
+      c.width = 86; c.height = 86;
+      const g = c.getContext('2d');
+      const smallCell = 18;
+      const offsetX = Math.floor((86 - p.shape[0].length*smallCell)/2);
+      const offsetY = Math.floor((86 - p.shape.length*smallCell)/2);
+      for(let r=0;r<p.shape.length;r++){
+        for(let c0=0;c0<p.shape[0].length;c0++){
+          if(p.shape[r][c0]){
+            g.fillStyle = p.color;
+            g.fillRect(offsetX + c0*smallCell + 2, offsetY + r*smallCell + 2, smallCell-4, smallCell-4);
+          }
+        }
+      }
+      slot.appendChild(c);
+      nextRow.appendChild(slot);
+    }
+  }
+
+  // periodic render loop
+  function loop(){
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // controls
+  resetBtn.addEventListener('click', () => { reset(); });
+
+  // initial start
+  loadHigh();
+  reset();
+
+  // expose debug
+  window.BP = { grid, pieces, reset };
+
+})();
+</script>
+</body>
+</html>
