@@ -2,85 +2,82 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>Block Deluxe — Táo Bắc Việt</title>
+<link rel="icon" href="fa.png" type="image/png">
 <style>
 :root{
   --bg:#071421; --panel:#081826; --accent:#ffd66b; --muted:#9fb0cc;
+  --card:#071827;
 }
-html,body{height:100%;margin:0;background:var(--bg);color:#e6eef8;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;display:flex;align-items:flex-start;justify-content:center;padding:20px}
-.wrap{display:flex;gap:20px;align-items:flex-start}
-.board{background:linear-gradient(180deg,#071827,#04121a);padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
-.hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;width:760px}
-.btn{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;color:#081018;font-weight:700;cursor:pointer}
-.canvas-wrap{width:760px;display:flex;justify-content:center}
+html,body{height:100%;margin:0;background:var(--bg);color:#e6eef8;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+.app{min-height:100vh;display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:12px;box-sizing:border-box}
+.header{display:flex;flex-direction:row;align-items:center;justify-content:space-between;padding:10px 12px;background:linear-gradient(180deg,var(--card),#05121a);border-radius:12px}
+.player{display:flex;flex-direction:column;gap:6px}
+.player .title{font-weight:800;font-size:16px}
+.stats{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.stat{font-size:13px;color:var(--muted)}
+.stat strong{color:#fff;margin-left:6px}
+.controls{display:flex;gap:8px;align-items:center}
+.btn{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;color:#081018;font-weight:700;cursor:pointer;touch-action:none}
+.smallBtn{background:#9fb0cc;padding:6px 8px;border-radius:8px;color:#081018;font-weight:700}
+.container{display:flex;flex-direction:column;align-items:stretch;gap:10px;flex:1;justify-content:center}
+.gameWrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.canvas-wrap{background:linear-gradient(180deg,#06121a,#051018);padding:10px;border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
 canvas{background:#06121a;border-radius:8px;display:block;touch-action:none}
-.right{width:320px;padding:14px;background:linear-gradient(#071322,#05101a);border-radius:12px}
-.small{font-size:13px;color:var(--muted)}
+.piecesWrap{display:flex;gap:12px;align-items:center;justify-content:center;padding:10px;flex-wrap:nowrap}
+.big-slot{width:110px;height:110px;background:#071722;border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 6px rgba(0,0,0,0.4);touch-action:none;user-select:none}
+.footer{padding:10px;border-radius:12px;background:linear-gradient(180deg,#071827,#04101a);text-align:center;color:var(--muted);font-size:13px}
 .toast-wrap{position:fixed;left:50%;transform:translateX(-50%);top:18px;pointer-events:none;z-index:60}
 .toast{background:rgba(0,0,0,0.55);color:#fff;padding:8px 12px;border-radius:8px;margin-top:8px;opacity:0;transform:translateY(-8px) scale(.98);transition:all .28s cubic-bezier(.2,.9,.2,1)}
 .toast.show{opacity:1;transform:translateY(0) scale(1)}
-.next-row{display:flex;gap:12px;margin-top:8px}
-.next-slot{width:120px;height:120px;background:#06101a;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 6px rgba(0,0,0,0.6);cursor:pointer;user-select:none}
-.label{font-size:12px;color:var(--muted);margin-top:8px}
-.hud-left{display:flex;flex-direction:column;gap:6px}
-.hud-right{display:flex;gap:12px;align-items:center}
-.footer{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-size:13px}
-.crown{font-size:18px;margin-left:6px}
 #nameModal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:120;visibility:hidden}
 #nameModal.show{visibility:visible}
-.modalCard{background:#071827;padding:18px;border-radius:10px;min-width:320px}
+.modalCard{background:var(--card);padding:18px;border-radius:10px;min-width:280px}
 .input{width:100%;padding:8px;border-radius:8px;border:1px solid #224;outline:none;background:#0b1a24;color:#e6eef8}
-.smallNote{font-size:12px;color:#9fb0cc;margin-top:8px}
-.row{display:flex;gap:8px;align-items:center}
-.continueBtn{position:fixed;right:24px;bottom:24px;background:#ffd66b;color:#081018;padding:10px 14px;border-radius:12px;font-weight:700;box-shadow:0 8px 20px rgba(0,0,0,0.5);display:none;z-index:200}
-.canvas-wrap.shake{animation:shake .36s ease-in-out}
-@keyframes shake{0%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}100%{transform:translateX(0)}}
+.smallNote{font-size:12px;color:var(--muted);margin-top:8px}
+.crown{font-size:18px;margin-left:6px}
+.continueBtn{position:fixed;right:16px;bottom:16px;background:#ffd66b;color:#081018;padding:10px 14px;border-radius:12px;font-weight:700;box-shadow:0 8px 20px rgba(0,0,0,0.5);display:none;z-index:200}
+@media (min-width:900px){
+  .app{max-width:980px;margin:18px auto}
+  .big-slot{width:120px;height:120px}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="board">
-    <div class="hud">
-      <div class="hud-left">
-        <div style="font-weight:800;font-size:18px">Block Deluxe</div>
-        <div class="small">Double-click next piece để xoay • Kéo & thả để đặt • Nhập tên lần đầu để lưu</div>
-      </div>
-      <div class="hud-right">
-        <div class="small">Score: <strong id="score">0</strong></div>
-        <div class="small">High: <strong id="high">0</strong><span id="crown" class="crown" style="display:none"> 👑</span></div>
-        <button id="reset" class="btn">Reset</button>
-        <button id="mute" class="btn" style="background:#9fb0cc;color:#081018">Sound</button>
+<div class="app">
+  <!-- header / player -->
+  <div class="header">
+    <div class="player">
+      <div class="title">Block Deluxe</div>
+      <div class="stats">
+        <div class="stat">Player: <strong id="playerName">Guest</strong></div>
+        <div class="stat">Score: <strong id="score">0</strong></div>
+        <div class="stat">High: <strong id="high">0</strong><span id="crown" class="crown" style="display:none"> 👑</span></div>
       </div>
     </div>
-
-    <div class="canvas-wrap" id="canvasWrap">
-      <canvas id="game" width="760" height="860"></canvas>
-    </div>
-
-    <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;align-items:center">
-      <div class="small">Next pieces (double-click để xoay)</div>
-      <div class="next-row" id="nextRow"></div>
-    </div>
-
-    <div class="footer">
-      <span>© Táo Bắc Việt Team — Block Deluxe</span>
+    <div class="controls">
+      <button id="reset" class="btn">Reset</button>
+      <button id="mute" class="smallBtn">Sound</button>
     </div>
   </div>
 
-  <div class="right">
-    <div style="font-weight:700">Player</div>
-    <div class="small" style="margin-top:6px">Name: <strong id="playerName">Guest</strong></div>
-    <div style="margin-top:12px">
-      <div class="small">Fake Losses Remaining: <strong id="lives">5</strong></div>
-      <div class="small" style="margin-top:8px">Combo: <strong id="combo">0</strong></div>
-      <div class="small" style="margin-top:8px">Pieces Bag: <strong id="bagCount">0</strong></div>
-    </div>
-    <div style="margin-top:12px">
-      <button id="undo" class="btn" style="background:#4aa3ff;color:#041018">Undo (1)</button>
-      <div class="smallNote" style="margin-top:8px">Gợi ý: Double-click next-slot để xoay, kéo khối từ khu bên phải đặt vào lưới.</div>
+  <!-- main game column -->
+  <div class="container">
+    <div class="gameWrap">
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="game" width="740" height="740" aria-label="Block Deluxe board"></canvas>
+      </div>
+
+      <!-- big piece slots (drag from here) -->
+      <div class="piecesWrap" id="piecesWrap">
+        <!-- JS will create 3 .big-slot elements, each contains a small canvas -->
+      </div>
     </div>
   </div>
+
+  <!-- footer -->
+  <div class="footer">© Táo Bắc Việt Team — Block Deluxe</div>
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
@@ -90,59 +87,65 @@ canvas{background:#06121a;border-radius:8px;display:block;touch-action:none}
 <div id="nameModal"><div class="modalCard">
   <div style="font-weight:700;margin-bottom:8px">Xin chào! Nhập tên để bắt đầu</div>
   <input id="nameInput" class="input" placeholder="Tên của bạn..." />
-  <div style="margin-top:10px" class="row">
+  <div style="margin-top:10px;display:flex;gap:8px">
     <button id="nameSave" class="btn">Bắt đầu</button>
-    <button id="skipName" class="btn" style="background:#4a5568">Bỏ qua</button>
+    <button id="skipName" class="smallBtn">Bỏ qua</button>
   </div>
-  <div class="smallNote">Tên sẽ được lưu lại trên trình duyệt (localStorage).</div>
+  <div class="smallNote">Tên sẽ được lưu trên trình duyệt (localStorage).</div>
 </div></div>
 
+<!-- background music file (bc.mp3) -->
+<audio id="bgMusic" src="bc.mp3" loop preload="auto"></audio>
+
 <script>
-/* Block Deluxe — Full integrated version
- - 9x9 grid, many shapes (incl stairs)
- - Drag & drop, double-click rotate on next-slot or while dragging
- - Score by cell placed, combo bonuses for clears
- - 5 fake losses (turns) before final loss (score reset)
- - Rainbow per-cell when grid empty
- - Name prompt saved to localStorage
- - Highscore saved, crown shown
- - Sounds with WebAudio
+/*
+  Block Deluxe — Mobile-optimized vertical layout version
+  - Drag from big-slot only (3 slots)
+  - Double-click on slot to rotate clockwise
+  - Double-click while dragging rotates
+  - Touch support via Pointer Events
+  - Score by placed cells + combo bonuses; particles & rainbow; 5 fake losses
+  - Name prompt saved to localStorage; highscore saved with crown
+  - Uses WebAudio for SFX; bgMusic plays on first user interaction
 */
 
 (() => {
-  // CONFIG
+  // Config
   const GRID = 9, CELL = 56, OFFSET = 10;
   const BOARD_W = GRID * CELL, BOARD_H = GRID * CELL;
   const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d', {alpha:false});
+  const ctx = canvas.getContext('2d', { alpha: false });
   const canvasWrap = document.getElementById('canvasWrap');
+  const piecesWrap = document.getElementById('piecesWrap');
   const scoreEl = document.getElementById('score');
   const highEl = document.getElementById('high');
   const resetBtn = document.getElementById('reset');
   const muteBtn = document.getElementById('mute');
   const toastWrap = document.getElementById('toastWrap');
-  const nextRow = document.getElementById('nextRow');
   const playerNameEl = document.getElementById('playerName');
-  const livesEl = document.getElementById('lives');
-  const comboEl = document.getElementById('combo');
-  const bagCountEl = document.getElementById('bagCount');
+  const livesEl = document.getElementById('lives') || null;
+  const comboEl = document.getElementById('combo') || null;
+  const bagCountEl = document.getElementById('bagCount') || null;
   const crownEl = document.getElementById('crown');
-  const undoBtn = document.getElementById('undo');
   const continueBtn = document.getElementById('continueBtn');
+  const bgMusic = document.getElementById('bgMusic');
 
-  // DPR sizing
-  function adjustCanvas(){
+  // Responsive canvas sizing (fit available width on mobile)
+  function adjustCanvasSize(){
+    // canvas area width based on container
+    const available = Math.min(window.innerWidth - 28, 760);
+    const size = Math.min(available, window.innerHeight - 240); // leave space for header/footer
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.style.width = (BOARD_W + OFFSET*2 + 120) + 'px';
-    canvas.style.height = (BOARD_H + OFFSET*2 + 200) + 'px';
-    canvas.width = Math.round((BOARD_W + OFFSET*2 + 120) * dpr);
-    canvas.height = Math.round((BOARD_H + OFFSET*2 + 200) * dpr);
+    canvas.width = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
     ctx.setTransform(dpr,0,0,dpr,0,0);
   }
-  adjustCanvas();
-  window.addEventListener('resize', adjustCanvas);
+  adjustCanvasSize();
+  window.addEventListener('resize', adjustCanvasSize);
 
-  // palette & shapes (include stairs and varied)
+  // Palettes & shapes (with stairs etc.)
   const PALETTE = ['#FF6B6B','#FF9F43','#FFD66B','#9AE66A','#6BCBFF','#6B8CFF','#C27BFF','#9bf','#f9b','#7ff'];
   const SHAPES = [
     [[1,1,1,1]],           // I4
@@ -158,18 +161,17 @@ canvas{background:#06121a;border-radius:8px;display:block;touch-action:none}
     [[0,1,1],[1,1,0]],     // S
     [[1,0],[1,1]],         // small corner
     [[0,1],[1,1]],         // other corner
-    [[1,0,1],[1,1,1]],     // hollow-ish, more complex
-    [[1,1,0],[0,1,0],[0,1,1]], // complex step-like
+    [[1,0,1],[1,1,1]],     // more complex
+    [[1,1,0],[0,1,0],[0,1,1]], // step-like
     [[1,0],[1,0],[1,0],[1,0]], // I vertical 4
     [[1,1,0],[0,1,1]],     // stair (2-step)
-    [[1,0,0],[1,1,1],[0,0,1]], // Z-like bigger
     [[1,1,1,1,1]],         // 5-long (rare)
-    [[1,1,1],[1,1,1]],     // 3x2 block
+    [[1,1,1],[1,1,1]]      // 3x2 block
   ];
 
-  // state
+  // State
   let grid = [];
-  let pieces = []; // waiting pieces (3)
+  let pieces = []; // 3 waiting pieces
   let bag = [];
   let score = 0, highScore = 0, combo = 0;
   let dragging = null;
@@ -181,12 +183,13 @@ canvas{background:#06121a;border-radius:8px;display:block;touch-action:none}
   let historyStack = [];
   let isMuted = false;
 
-  // audio setup
+  // WebAudio
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   const audioCtx = new AudioCtx();
   const master = audioCtx.createGain(); master.gain.value = 1; master.connect(audioCtx.destination);
 
   function makeTone(freq, type='sine', dur=0.18, vol=0.08){
+    if(isMuted) return;
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     o.type = type; o.frequency.value = freq;
@@ -198,149 +201,138 @@ canvas{background:#06121a;border-radius:8px;display:block;touch-action:none}
     g.gain.exponentialRampToValueAtTime(0.0001, now+dur);
     o.stop(now+dur+0.02);
   }
-  function playPlace(){ if(isMuted) return; makeTone(880,'sine',0.18,0.12); }
-  function playClear(){ if(isMuted) return; const now = audioCtx.currentTime; [420,660,880].forEach((f,i)=>{ const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.type='sawtooth';o.frequency.value=f;o.connect(g);g.connect(master);g.gain.value=0.0001;g.gain.linearRampToValueAtTime(0.14/(i+1),now+0.002);g.gain.exponentialRampToValueAtTime(0.0001,now+0.6);o.start(now);o.stop(now+0.6);}); }
-  function playFail(){ if(isMuted) return; makeTone(130,'sine',0.5,0.12); }
-  function playWin(){ if(isMuted) return; makeTone(1200,'triangle',0.38,0.14); makeTone(1700,'sine',0.32,0.08); }
+  function playPlace(){ makeTone(880,'sine',0.16,0.12); }
+  function playClear(){ const now = audioCtx.currentTime; [420,660,880].forEach((f,i)=>{ const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='sawtooth'; o.frequency.value=f; g.gain.value=0.0001; o.connect(g); g.connect(master); g.gain.linearRampToValueAtTime(0.16/(i+1), now+0.002); g.gain.exponentialRampToValueAtTime(0.0001, now+0.6); o.start(now); o.stop(now+0.6); }); }
+  function playFail(){ makeTone(130,'sine',0.5,0.12); }
+  function playWin(){ makeTone(1200,'triangle',0.38,0.14); makeTone(1700,'sine',0.32,0.08); }
 
-  // helpers
+  // Helpers
   function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
   function randColor(){ return PALETTE[Math.floor(Math.random()*PALETTE.length)]; }
-  function randShapeIndex(){ return Math.floor(Math.random()*SHAPES.length); }
-  function rotateMatrix(m){
-    const R=m.length, C=m[0].length; const out=Array(C).fill().map(()=>Array(R).fill(0));
-    for(let r=0;r<R;r++) for(let c=0;c<C;c++) out[c][R-1-r]=m[r][c];
-    return out;
-  }
+  function rotateMatrix(m){ const R=m.length, C=m[0].length; const out=Array(C).fill().map(()=>Array(R).fill(0)); for(let r=0;r<R;r++) for(let c=0;c<C;c++) out[c][R-1-r]=m[r][c]; return out; }
 
-  // grid init
+  // Grid init
   function resetGrid(){ grid = Array(GRID).fill().map(()=>Array(GRID).fill(0)); }
   resetGrid();
 
-  // bag randomizer
-  function refillBag(){
-    bag = [];
-    for(let i=0;i<SHAPES.length;i++) bag.push(i);
-    for(let i=bag.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [bag[i],bag[j]]=[bag[j],bag[i]]; }
-    updateBagCount();
-  }
-  function nextFromBag(){
-    if(bag.length===0) refillBag();
-    const idx = bag.pop();
-    updateBagCount();
-    return { shape: deepClone(SHAPES[idx]), color: randColor() };
-  }
-  function updateBagCount(){ bagCountEl.textContent = bag.length; }
+  // Bag
+  function refillBag(){ bag = []; for(let i=0;i<SHAPES.length;i++) bag.push(i); for(let i=bag.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [bag[i],bag[j]]=[bag[j],bag[i]]; } updateBagCount(); }
+  function nextFromBag(){ if(bag.length===0) refillBag(); const idx = bag.pop(); updateBagCount(); return { shape: deepClone(SHAPES[idx]), color: randColor() }; }
+  function updateBagCount(){ if(bagCountEl) bagCountEl.textContent = bag.length; }
 
-  // ensure pieces spawn with at least one valid placement
+  // Ensure at least one valid placement when generating pieces
   function generatePieces(){
-    // try attempt multiple times to guarantee at least one is placeable
     let attempts=0;
     do {
       pieces = [];
       for(let i=0;i<3;i++){
         pieces.push(Object.assign(nextFromBag(), {
-          x: OFFSET + 60 + i*180,
-          y: OFFSET + BOARD_H + 36,
-          spawnX: OFFSET + 60 + i*180,
-          spawnY: OFFSET + BOARD_H + 36
+          x: 0, y:0, spawnX:0, spawnY:0
         }));
       }
       attempts++;
-      if(attempts>18) break; // fallback
+      if(attempts>18) break;
     } while(!hasAnyMoveForPieces(pieces));
-    populateNextRow();
+    renderPiecesSlots();
   }
 
-  // draw functions
+  // Drawing board & pieces
   function draw(){
-    // bg
+    // clear
     ctx.fillStyle = '#06121a';
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    const bx = OFFSET, by = OFFSET;
-    // board bg
-    ctx.fillStyle='#031018'; roundRectFill(bx-6,by-6,BOARD_W+12,BOARD_H+12,12);
-    ctx.fillStyle='#041018'; roundRectFill(bx,by,BOARD_W,BOARD_H,8);
+    // compute scale because canvas may be resized
+    const displaySize = parseFloat(canvas.style.width) || canvas.width;
+    const scale = (parseFloat(canvas.style.width) || canvas.width) / (BOARD_W + OFFSET*2 + 120);
+    // Instead of scaling approach, we will compute cell size based on canvas pixel width to keep board square
+    const pxSize = Math.min(canvas.width / (GRID), canvas.height / (GRID));
+    const cell = pxSize; // pixel per cell on canvas coordinate space (we already set transform with DPR)
+    // board origin
+    const totalBoardPx = cell * GRID;
+    const bx = (canvas.width / (window.devicePixelRatio||1) - totalBoardPx) / 2;
+    const by = (canvas.height / (window.devicePixelRatio||1) - totalBoardPx) / 2;
 
-    // cells + detect empty
+    // draw cells and detect empty
     let hasAny=false;
     for(let r=0;r<GRID;r++){
       for(let c=0;c<GRID;c++){
-        const x = bx + c*CELL, y = by + r*CELL;
+        const x = bx + c*cell, y = by + r*cell;
         if(grid[r][c]){ hasAny=true; ctx.fillStyle = grid[r][c]; }
         else ctx.fillStyle = 'rgba(255,255,255,0.02)';
-        roundRectFill(x+4,y+4,CELL-8,CELL-8,6);
-        ctx.strokeStyle='rgba(0,0,0,0.12)'; ctx.strokeRect(x+4,y+4,CELL-8,CELL-8);
+        roundRectFill(x+4, y+4, cell-8, cell-8, 6);
+        ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.strokeRect(x+4,y+4,cell-8,cell-8);
       }
     }
 
-    // rainbow when empty (each cell its own hue, top->down left->right)
+    // rainbow when empty: each cell own hue (top->down, left->right)
     if(!hasAny){
       for(let r=0;r<GRID;r++){
         for(let c=0;c<GRID;c++){
           const hue = ((r*GRID + c) * 16 + Math.floor(performance.now()/80)) % 360;
           ctx.fillStyle = `hsl(${hue},85%,55%)`;
-          const x = bx + c*CELL + 4, y = by + r*CELL + 4;
-          roundRectFill(x,y,CELL-8,CELL-8,6);
+          const x = bx + c*cell + 4, y = by + r*cell + 4;
+          roundRectFill(x,y,cell-8,cell-8,6);
         }
       }
     }
 
-    // animations for cleared rows/cols
+    // draw animations
     anims.forEach(a=>{
       const p = Math.min((performance.now()-a.start)/a.dur,1);
-      if(a.type==='row'){ const ry = by + a.index*CELL + 4; const gx1 = bx + ( - (1-p) * (BOARD_W) ); const gx2 = gx1 + BOARD_W*1.2; const g = ctx.createLinearGradient(gx1, ry, gx2, ry + CELL - 8); [0,0.14,0.28,0.42,0.56,0.7,0.86,1].forEach((s,i)=>{ const hue=(i*360/8 + p*360)%360; g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`); }); ctx.fillStyle=g; roundRectFill(bx+4, ry, BOARD_W-8, CELL-8,6); }
-      if(a.type==='col'){ const cx = bx + a.index*CELL + 4; const gy1 = by + ( - (1-p) * (BOARD_H) ); const gy2 = gy1 + BOARD_H*1.2; const g = ctx.createLinearGradient(cx, gy1, cx + CELL - 8, gy2); [0,0.14,0.28,0.42,0.56,0.7,0.86,1].forEach((s,i)=>{ const hue=(i*360/8 + p*360)%360; g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`); }); ctx.fillStyle=g; roundRectFill(cx, by+4, CELL-8, BOARD_H-8,6); }
+      if(a.type==='row'){ const ry = by + a.index*cell + 4; const gx1 = bx + ( - (1-p) * (totalBoardPx) ); const gx2 = gx1 + totalBoardPx*1.2; const g = ctx.createLinearGradient(gx1, ry, gx2, ry + cell - 8); [0,0.14,0.28,0.42,0.56,0.7,0.86,1].forEach((s,i)=>{ const hue=(i*360/8 + p*360)%360; g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`); }); ctx.fillStyle=g; roundRectFill(bx+4, ry, totalBoardPx-8, cell-8,6); }
+      if(a.type==='col'){ const cx = bx + a.index*cell + 4; const gy1 = by + ( - (1-p) * (totalBoardPx) ); const gy2 = gy1 + totalBoardPx*1.2; const g = ctx.createLinearGradient(cx, gy1, cx + cell - 8, gy2); [0,0.14,0.28,0.42,0.56,0.7,0.86,1].forEach((s,i)=>{ const hue=(i*360/8 + p*360)%360; g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`); }); ctx.fillStyle=g; roundRectFill(cx, by+4, cell-8, totalBoardPx-8,6); }
     });
     anims = anims.filter(a => (performance.now()-a.start) < a.dur);
 
     updateAndDrawParticles();
 
-    // draw waiting pieces
-    pieces.forEach(p => drawPiece(p,false));
-
-    // dragging
-    if(dragging) drawPiece(dragging,true);
+    // draw dragging preview if dragging
+    if(dragging){
+      // Compute where dragging would map to grid (using same mapping as canPlaceAt)
+      const rect = canvas.getBoundingClientRect();
+      const mx = (dragging.screenX - rect.left) * (canvas.width / rect.width);
+      const my = (dragging.screenY - rect.top) * (canvas.height / rect.height);
+      const col = Math.floor((mx/ (cell)) - (bx/cell));
+      const row = Math.floor((my/ (cell)) - (by/cell));
+      const valid = canPlaceAt(dragging.shape, row, col);
+      if(typeof row === 'number' && typeof col === 'number'){
+        for(let r=0;r<dragging.shape.length;r++){
+          for(let c=0;c<dragging.shape[0].length;c++){
+            if(dragging.shape[r][c]){
+              const gx = bx + (col + c) * cell + 4;
+              const gy = by + (row + r) * cell + 4;
+              ctx.globalAlpha = valid ? 0.28 : 0.16;
+              ctx.fillStyle = valid ? '#9ef6ff' : '#ff9e9e';
+              roundRectFill(gx, gy, cell-8, cell-8, 6);
+              ctx.globalAlpha = 1;
+            }
+          }
+        }
+      }
+      // draw dragging piece near finger
+      for(let r=0;r<dragging.shape.length;r++){
+        for(let c=0;c<dragging.shape[0].length;c++){
+          if(dragging.shape[r][c]){
+            const size = Math.max(20, cell*0.9/2);
+            const x = (dragging.screenX || 0) /  (window.devicePixelRatio||1) - (size/2) + c * (size+2);
+            const y = (dragging.screenY || 0) /  (window.devicePixelRatio||1) - (size/2) + r * (size+2);
+            ctx.fillStyle = dragging.color; ctx.fillRect(x,y,size,size);
+          }
+        }
+      }
+    }
   }
 
+  // helper to draw rounded rect
   function roundRectFill(x,y,w,h,r){
     ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); ctx.fill();
   }
 
-  function drawPiece(p,isDragging){
-    const shape = p.shape;
-    const baseX = p.x, baseY = p.y;
-    for(let r=0;r<shape.length;r++){
-      for(let c=0;c<shape[0].length;c++){
-        if(shape[r][c]){
-          const x = baseX + c*CELL, y = baseY + r*CELL;
-          ctx.fillStyle='rgba(0,0,0,0.36)'; roundRectFill(x+6,y+10,CELL-14,CELL-14,8);
-          ctx.fillStyle = p.color; roundRectFill(x+4,y+4,CELL-18,CELL-18,8);
-          ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(x+10,y+10,(CELL-28)*0.6,8);
-        }
-      }
-    }
-    if(isDragging){
-      const col = Math.floor((p.x - OFFSET)/CELL);
-      const row = Math.floor((p.y - OFFSET)/CELL);
-      const valid = canPlaceAt(p.shape,row,col);
-      if(row!==null && col!==null){
-        for(let r=0;r<p.shape.length;r++) for(let c=0;c<p.shape[0].length;c++) if(p.shape[r][c]){
-          const gx = OFFSET + (col+c)*CELL + 4;
-          const gy = OFFSET + (row+r)*CELL + 4;
-          ctx.globalAlpha = valid ? 0.28 : 0.16;
-          ctx.fillStyle = valid ? '#9ef6ff' : '#ff9e9e';
-          roundRectFill(gx,gy,CELL-8,CELL-8,6);
-          ctx.globalAlpha = 1;
-        }
-      }
-    }
-  }
-
-  // check placement
+  // Placement check
   function canPlaceAt(shape,row,col){
     if(typeof row !== 'number' || typeof col !== 'number') return false;
+    if(row === null || col === null) return false;
     for(let r=0;r<shape.length;r++){
       for(let c=0;c<shape[0].length;c++){
         if(shape[r][c]){
@@ -353,18 +345,22 @@ canvas{background:#06121a;border-radius:8px;display:block;touch-action:none}
     return true;
   }
 
-  // place piece and scoring
+  // Place piece
   function placePieceAt(p,row,col){
-    // record history for undo
     historyStack.push({grid:deepClone(grid),score,combo,fakeLossesRemaining});
     if(historyStack.length>6) historyStack.shift();
 
     const placedCells=[];
-    for(let r=0;r<p.shape.length;r++) for(let c=0;c<p.shape[0].length;c++) if(p.shape[r][c]){
-      const rr=row+r, cc=col+c; grid[rr][cc]=p.color; placedCells.push({r:rr,c:cc});
+    for(let r=0;r<p.shape.length;r++){
+      for(let c=0;c<p.shape[0].length;c++){
+        if(p.shape[r][c]){
+          const rr = row + r, cc = col + c;
+          grid[rr][cc] = p.color;
+          placedCells.push({r:rr,c:cc});
+        }
+      }
     }
 
-    // score by number of placed cells
     const cellsPlaced = placedCells.length;
     const basePts = cellsPlaced * 8;
     score += basePts;
@@ -372,7 +368,7 @@ canvas{background:#06121a;border-radius:8px;display:block;touch-action:none}
 
     playPlace();
 
-    // clear lines
+    // clear rows/cols
     const pre = deepClone(grid);
     const cleared = doClearLines();
     if(cleared.count>0){
@@ -384,54 +380,49 @@ canvas{background:#06121a;border-radius:8px;display:block;touch-action:none}
       cleared.rows.forEach(r=>anims.push({type:'row',index:r,start:now,dur:900}));
       cleared.cols.forEach(c=>anims.push({type:'col',index:c,start:now,dur:900}));
 
-      // combo handling: combo grows if consecutive clears
       combo = Math.max(1, combo) + (Math.max(cleared.rows.length+cleared.cols.length,1)-1);
-      comboEl.textContent = combo;
       const linesCount = Math.max(cleared.rows.length+cleared.cols.length,1);
       const pts = cleared.count * 12 * linesCount * combo;
-      score += pts;
-      scoreEl.textContent = score;
+      score += pts; scoreEl.textContent = score;
       playClear();
       showToast(`🔥 Combo x${combo} +${pts} pts`,1400);
     } else {
-      combo = 0; comboEl.textContent = combo;
+      combo = 0;
     }
 
-    // update highscore if needed
     saveHighIfNeeded();
 
-    // after placing, refill pieces if empty
+    // refill pieces
     if(pieces.length === 0) generatePieces();
-    else if(!hasAnyMoveForPieces(pieces)) {
-      // If no possible moves with remaining pieces -> handle no-move (fake loss)
-      handleNoMoves();
-    }
+    else if(!hasAnyMoveForPieces(pieces)) handleNoMoves();
   }
 
-  // clear rows/cols
+  // Clear lines implementation
   function doClearLines(){
     const rowsCleared = [], colsCleared = [];
-    for(let r=0;r<GRID;r++){ if(grid[r].every(cell=>cell)) rowsCleared.push(r); }
-    for(let c=0;c<GRID;c++){ let full=true; for(let r=0;r<GRID;r++){ if(!grid[r][c]){ full=false; break; }} if(full) colsCleared.push(c); }
+    for(let r=0;r<GRID;r++){
+      if(grid[r].every(cell=>cell)) rowsCleared.push(r);
+    }
+    for(let c=0;c<GRID;c++){
+      let full=true; for(let r=0;r<GRID;r++){ if(!grid[r][c]){ full=false; break; } } if(full) colsCleared.push(c);
+    }
     const map={};
     rowsCleared.forEach(r=>{ for(let c=0;c<GRID;c++) map[`${r}_${c}`]=true; });
     colsCleared.forEach(c=>{ for(let r=0;r<GRID;r++) map[`${r}_${c}`]=true; });
-    const keys=Object.keys(map);
-    keys.forEach(k=>{ const [r,c]=k.split('_').map(Number); grid[r][c]=0; });
-    if(keys.length){
-      const linesCount = Math.max(rowsCleared.length + colsCleared.length,1);
-      const pts = keys.length * 12 * linesCount;
-      // base pts handled in placePieceAt (we add combo pts there)
-      return {rows:rowsCleared,cols:colsCleared,count:keys.length};
-    }
-    return {rows:rowsCleared,cols:colsCleared,count:0};
+    const keys = Object.keys(map);
+    keys.forEach(k=>{ const [r,c] = k.split('_').map(Number); grid[r][c]=0; });
+    return {rows:rowsCleared, cols:colsCleared, count: keys.length};
   }
 
-  // particles spawn
+  // Particles
   function spawnParticlesAtCell(r,c,color){
-    const baseX = OFFSET + c*CELL + CELL/2;
-    const baseY = OFFSET + r*CELL + CELL/2;
-    const targetX = OFFSET + BOARD_W + 60;
+    const dpr = window.devicePixelRatio || 1;
+    const canvasRect = canvas.getBoundingClientRect();
+    const cellPx = (canvas.width / (GRID)) / dpr;
+    const bx = (canvas.width / dpr - cellPx * GRID) / 2;
+    const baseX = bx + c*cellPx + cellPx/2;
+    const baseY = (canvas.height / dpr - cellPx * GRID) / 2 + r*cellPx + cellPx/2;
+    const targetX = bx + cellPx * GRID + 40;
     const n = 6;
     for(let i=0;i<n;i++){
       particles.push({
@@ -448,202 +439,184 @@ canvas{background:#06121a;border-radius:8px;display:block;touch-action:none}
     for(let i=particles.length-1;i>=0;i--){
       const p=particles[i]; const t=now-p.born;
       if(t>p.life){ particles.splice(i,1); continue; }
-      p.x += p.vx; p.y += p.vy; const a=1 - t/p.life;
-      ctx.globalAlpha = a; ctx.fillStyle=p.color; ctx.fillRect(p.x-3,p.y-3,6,6); ctx.globalAlpha=1;
+      p.x += p.vx; p.y += p.vy; const a = 1 - t/p.life;
+      ctx.globalAlpha = a; ctx.fillStyle = p.color; ctx.fillRect(p.x-3,p.y-3,6,6); ctx.globalAlpha = 1;
     }
   }
 
-  // animations/visuals
-  function spawnShake(){ canvasWrap.classList.add('shake'); setTimeout(()=>canvasWrap.classList.remove('shake'),360); }
+  // Anim loop
+  function loop(){
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
 
-  // check any move for pieces (with rotations)
+  // Checking possible placements for pieces (with rotations)
   function hasAnyMoveForPieces(checkPieces){
     for(const p of checkPieces){
       let s = deepClone(p.shape);
       for(let rot=0;rot<4;rot++){
-        for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++) if(canPlaceAt(s,r,c)) return true;
+        for(let r=0;r<GRID;r++){ for(let c=0;c<GRID;c++){ if(canPlaceAt(s,r,c)) return true; } }
         s = rotateMatrix(s);
       }
     }
     return false;
   }
 
-  // handle no moves -> fake loss
+  // Handle no moves -> fake loss
   function handleNoMoves(){
     fakeLossesRemaining--;
-    livesEl.textContent = fakeLossesRemaining;
+    localStorage.setItem('bb_fake_losses', String(fakeLossesRemaining));
+    // update UI
+    showToast(`⚠️ Không còn nước đi — mất 1 lượt. Còn ${fakeLossesRemaining}`, 1800);
     playFail();
-    showToast(`⚠️ Không còn nước đi — mất 1 lượt. Còn ${fakeLossesRemaining}`,1800);
-    // clear board but keep score
     resetGrid();
-    // respawn pieces
-    refillBag(); generatePieces();
-    // show continue button if still have fake losses left
-    if(fakeLossesRemaining > 0){
-      continueBtn.style.display = 'block';
-    } else {
-      // final loss
+    refillBag();
+    generatePieces();
+    if(fakeLossesRemaining > 0) continueBtn.style.display = 'block';
+    else {
       showToast('💀 Thua thật — Điểm về 0', 2200);
       score = 0; scoreEl.textContent = score;
-      fakeLossesRemaining = 5; livesEl.textContent = fakeLossesRemaining;
-      localStorage.setItem('bb_high', String(highScore));
-      // hide continue button
+      fakeLossesRemaining = 5; localStorage.setItem('bb_fake_losses', String(fakeLossesRemaining));
       continueBtn.style.display = 'none';
+      saveHighIfNeeded();
     }
   }
-
-  // continue button handler (deduct one fake loss and continue)
   continueBtn.addEventListener('click', ()=>{
     continueBtn.style.display = 'none';
-    // allow player to continue with current fakeLossesRemaining (already decremented in handleNoMoves)
     showToast('Tiếp tục — chơi tiếp',1200);
   });
 
-  // next-row populate with double-click rotate
-  function populateNextRow(){
-    nextRow.innerHTML = '';
+  // Render big slots (3) as big-slot elements with inner canvas previews
+  function renderPiecesSlots(){
+    piecesWrap.innerHTML = '';
     for(let i=0;i<3;i++){
-      const p = pieces[i];
-      const slot = document.createElement('div');
-      slot.className = 'next-slot';
-      const c = document.createElement('canvas');
-      c.width = 86; c.height = 86;
-      const g = c.getContext('2d');
-      const smallCell = 18;
-      const offsetX = Math.floor((86 - p.shape[0].length*smallCell)/2);
-      const offsetY = Math.floor((86 - p.shape.length*smallCell)/2);
-      for(let r=0;r<p.shape.length;r++) for(let c0=0;c0<p.shape[0].length;c0++) if(p.shape[r][c0]){
-        g.fillStyle = p.color; g.fillRect(offsetX + c0*smallCell + 2, offsetY + r*smallCell + 2, smallCell-4, smallCell-4);
-      }
+      const slot = document.createElement('div'); slot.className = 'big-slot'; slot.dataset.index = i;
+      const c = document.createElement('canvas'); c.width = 110; c.height = 110;
+      c.style.width = '100%'; c.style.height = '100%';
       slot.appendChild(c);
-      // dragging from slot
-      slot.addEventListener('pointerdown', (e)=>{
+      piecesWrap.appendChild(slot);
+
+      // pointerdown to start dragging from big slot
+      slot.addEventListener('pointerdown', (ev)=>{
         if(gameOver) return;
         if(audioCtx.state === 'suspended') audioCtx.resume();
+        ev.preventDefault();
         const rect = canvas.getBoundingClientRect();
-        dragging = { shape: deepClone(p.shape), color: p.color, x: e.clientX - rect.left - 28, y: e.clientY - rect.top - 28, spawnIndex:i, spawnX: p.spawnX, spawnY: p.spawnY };
-        pieces.splice(i,1); populateNextRow(); draw();
-        e.target.setPointerCapture?.(e.pointerId);
+        const p = pieces[i];
+        // screen coords for finger tracking (we'll store the pointer's screen coords)
+        dragging = { shape: deepClone(p.shape), color: p.color, spawnIndex:i, screenX: ev.clientX, screenY: ev.clientY };
+        // remove piece from array (slot empties)
+        pieces.splice(i,1);
+        renderPiecesSlots();
       });
-      // double click rotate in slot
-      slot.addEventListener('dblclick', (e)=>{
-        pieces[i].shape = rotateMatrix(pieces[i].shape);
-        populateNextRow();
+
+      // double click on slot rotates that piece clockwise
+      slot.addEventListener('dblclick', (ev)=>{
+        ev.stopPropagation();
+        const idx = parseInt(slot.dataset.index,10);
+        if(pieces[idx]){
+          pieces[idx].shape = rotateMatrix(pieces[idx].shape);
+          renderPiecesSlots();
+        }
       });
-      nextRow.appendChild(slot);
+
+      // draw piece preview into canvas
+      const g = c.getContext('2d');
+      g.clearRect(0,0,c.width,c.height);
+      if(pieces[i]){
+        const p = pieces[i];
+        const smallCell = 18;
+        const shapeW = p.shape[0].length * smallCell;
+        const shapeH = p.shape.length * smallCell;
+        const offsetX = Math.floor((c.width - shapeW)/2);
+        const offsetY = Math.floor((c.height - shapeH)/2);
+        for(let r=0;r<p.shape.length;r++){
+          for(let cc0=0;cc0<p.shape[0].length;cc0++){
+            if(p.shape[r][cc0]){
+              g.fillStyle = p.color;
+              g.fillRect(offsetX + cc0*smallCell + 4, offsetY + r*smallCell + 4, smallCell-6, smallCell-6);
+            }
+          }
+        }
+      }
     }
   }
 
-  // pointer events
-  let pointerOffset = {x:0,y:0};
-  canvas.addEventListener('pointerdown', (e)=>{
-    if(gameOver) return;
-    if(audioCtx.state === 'suspended') audioCtx.resume();
-    // pick from waiting pieces area if click in that area (handled by slot), else nothing
+  // pointermove global to track dragging finger and update dragging.screenX/screenY
+  window.addEventListener('pointermove', (ev)=>{
+    if(!dragging) return;
+    dragging.screenX = ev.clientX;
+    dragging.screenY = ev.clientY;
   });
 
-  window.addEventListener('pointermove', (e)=>{
+  // pointerup -> attempt place
+  window.addEventListener('pointerup', (ev)=>{
     if(!dragging) return;
+    // compute grid coords relative to canvas
     const rect = canvas.getBoundingClientRect();
-    dragging.x = e.clientX - rect.left - CELL/2;
-    dragging.y = e.clientY - rect.top - CELL/2;
-    draw();
-  });
-
-  window.addEventListener('pointerup', (e)=>{
-    if(!dragging) return;
-    const rect = canvas.getBoundingClientRect();
-    const col = Math.floor((dragging.x - OFFSET) / CELL);
-    const row = Math.floor((dragging.y - OFFSET) / CELL);
-    if(canPlaceAt(dragging.shape,row,col)){
-      placePieceAt(dragging,row,col);
-      // refill pieces if needed
+    const dpr = window.devicePixelRatio || 1;
+    const mx = ev.clientX - rect.left;
+    const my = ev.clientY - rect.top;
+    // compute cell pixel size in client coords
+    const clientCell = (rect.width) / GRID;
+    const bx = 0;
+    const col = Math.floor(mx / clientCell);
+    const row = Math.floor(my / clientCell);
+    if(canPlaceAt(dragging.shape, row, col)){
+      placePieceAt(dragging, row, col);
+      // refill if empty
       if(pieces.length === 0) generatePieces();
       else if(!hasAnyMoveForPieces(pieces)) handleNoMoves();
     } else {
-      // animate return to next area
+      // animate return by restoring piece to pieces[] and show shake
       spawnShake();
-      animateReturnAndRestore(dragging);
+      // restore piece back to pieces[] end
+      pieces.push({ shape: deepClone(dragging.shape), color: dragging.color });
+      renderPiecesSlots();
     }
-    dragging = null; populateNextRow(); draw();
+    dragging = null;
   });
 
-  // rotate while dragging by double click on canvas (double click anywhere while dragging)
-  let lastClickTime = 0;
-  canvas.addEventListener('dblclick', (e)=>{
-    if(!dragging) return;
-    dragging.shape = rotateMatrix(dragging.shape);
-    draw();
+  // double-click on canvas while dragging rotates
+  canvas.addEventListener('dblclick', (ev)=>{
+    if(dragging){
+      dragging.shape = rotateMatrix(dragging.shape);
+      showToast('↻ Xoay khối', 600);
+    }
   });
 
-  // also allow double-click (rapid pointerdown) on slot canvas element handled above
+  // animate shake (add small CSS class)
+  function spawnShake(){ canvasWrap.classList.add('shake'); setTimeout(()=>canvasWrap.classList.remove('shake'),360); }
 
-  // return animation when invalid placed
-  function animateReturnAndRestore(obj){
-    const from = {x: obj.x, y: obj.y};
-    const to = {x: obj.spawnX || (OFFSET+60 + pieces.length*180), y: obj.spawnY || (OFFSET+BOARD_H + 36)};
-    const start = performance.now();
-    const dur = 260;
-    function anim(now){
-      const t = Math.min((now-start)/dur,1);
-      const ease = t<.5 ? 2*t*t : -1 + (4 - 2*t)*t;
-      obj.x = from.x + (to.x - from.x) * ease;
-      obj.y = from.y + (to.y - from.y) * ease;
-      draw();
-      if(t < 1) requestAnimationFrame(anim);
-      else {
-        pieces.push({ shape: obj.shape, color: obj.color, x: to.x, y: to.y, spawnX: to.x, spawnY: to.y });
-        populateNextRow(); dragging = null; draw();
-      }
-    }
-    requestAnimationFrame(anim);
-  }
-
-  // trigger shake
-  function triggerShake(){ canvasWrap.classList.add('shake'); setTimeout(()=> canvasWrap.classList.remove('shake'),360); }
-
-  // toast helper
+  // toast
   function showToast(text,dur=1400){
     const d = document.createElement('div'); d.className='toast'; d.textContent=text; toastWrap.appendChild(d);
     requestAnimationFrame(()=> d.classList.add('show'));
     setTimeout(()=> { d.classList.remove('show'); setTimeout(()=> d.remove(),300); }, dur);
   }
 
-  // undo
-  undoBtn.addEventListener('click', ()=>{
-    if(undoCount<=0 || historyStack.length===0){ showToast('Không thể undo'); return; }
-    const last = historyStack.pop();
-    grid = deepClone(last.grid);
-    score = last.score; scoreEl.textContent = score;
-    combo = last.combo; comboEl.textContent = combo;
-    fakeLossesRemaining = last.fakeLossesRemaining; livesEl.textContent = fakeLossesRemaining;
-    undoCount--;
-    showToast('Đã undo');
-  });
+  // Undo (not shown in UI by default) - can add a button if desired
 
-  // controls
+  // Controls
   resetBtn.addEventListener('click', ()=> resetAll());
   muteBtn.addEventListener('click', ()=>{
     isMuted = !isMuted;
-    if(isMuted){ master.gain.setValueAtTime(0, audioCtx.currentTime); muteBtn.textContent='Muted'; muteBtn.style.background='#6b7280'; }
-    else { master.gain.setValueAtTime(1, audioCtx.currentTime); muteBtn.textContent='Sound'; muteBtn.style.background='#9fb0cc'; }
+    if(isMuted){ master.gain.setValueAtTime(0, audioCtx.currentTime); muteBtn.textContent='Muted'; }
+    else { master.gain.setValueAtTime(1, audioCtx.currentTime); muteBtn.textContent='Sound'; }
   });
 
-  // highscore
+  // Highscore persistence
   function loadHigh(){ highScore = parseInt(localStorage.getItem('bb_high')||'0',10); if(isNaN(highScore)) highScore = 0; highEl.textContent = highScore; updateCrown(); }
   function saveHighIfNeeded(){ if(score > highScore){ highScore = score; localStorage.setItem('bb_high', String(highScore)); localStorage.setItem('bb_holder', localStorage.getItem('bb_name')||'Guest'); highEl.textContent = highScore; showToast('🏆 New High Score!', 1600); updateCrown(); } }
   function updateCrown(){ const holder = localStorage.getItem('bb_holder') || ''; const name = localStorage.getItem('bb_name') || ''; crownEl.style.display = (score >= highScore && highScore>0) || (holder === name && highScore>0) ? 'inline' : 'none'; }
 
-  // name modal
+  // Name modal
   const nameModal = document.getElementById('nameModal');
   const nameInput = document.getElementById('nameInput');
   const nameSave = document.getElementById('nameSave');
   const skipName = document.getElementById('skipName');
-  function askNameOnce(){
-    const stored = localStorage.getItem('bb_name');
-    if(stored){ playerNameEl.textContent = stored; return; }
-    nameModal.classList.add('show');
-  }
+  function askNameOnce(){ const stored = localStorage.getItem('bb_name'); if(stored){ playerNameEl.textContent = stored; return; } nameModal.classList.add('show'); }
   nameSave.addEventListener('click', ()=>{
     const v = nameInput.value.trim() || 'Guest';
     localStorage.setItem('bb_name', v);
@@ -657,46 +630,48 @@ canvas{background:#06121a;border-radius:8px;display:block;touch-action:none}
     nameModal.classList.remove('show');
   });
 
-  // reset and init
+  // Reset all / init
   function resetAll(){
     resetGrid();
     refillBag();
     generatePieces();
     score = 0; scoreEl.textContent = score;
-    fakeLossesRemaining = 5; livesEl.textContent = fakeLossesRemaining;
-    combo = 0; comboEl.textContent = combo;
-    historyStack = []; undoCount = 1;
+    fakeLossesRemaining = 5; localStorage.setItem('bb_fake_losses', String(fakeLossesRemaining));
+    combo = 0;
+    historyStack = [];
+    renderPiecesSlots();
     loadHigh();
-    draw();
+    showToast('Game đã được reset',900);
   }
 
-  // checking moves for a single piece (utility)
-  function hasMoveForPiece(piece){
-    let s = deepClone(piece.shape);
-    for(let rot=0;rot<4;rot++){
-      for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++) if(canPlaceAt(s,r,c)) return true;
-      s = rotateMatrix(s);
-    }
-    return false;
-  }
+  // Save highscore
+  function saveHighIfNeeded(){ if(score > highScore){ highScore = score; localStorage.setItem('bb_high', String(highScore)); localStorage.setItem('bb_holder', localStorage.getItem('bb_name')||'Guest'); highEl.textContent = highScore; showToast('🏆 New High Score!', 1600); updateCrown(); } }
 
-  // spawn pieces UI (initial)
-  function populateNextRowInitial(){
-    populateNextRow();
-  }
-
-  // periodic loop
-  function loop(){ draw(); requestAnimationFrame(loop); }
-  requestAnimationFrame(loop);
-
-  // init bootstrap
+  // Spawn pieces initial
   refillBag();
   generatePieces();
   loadHigh();
   askNameOnce();
-  draw();
 
-  // expose for debug
+  // Auto-play bg music on first interaction
+  let musicStarted = false;
+  function startAudioOnce(){
+    if(!musicStarted){
+      bgMusic.volume = 0.42;
+      bgMusic.play().catch(()=>{});
+      musicStarted = true;
+    }
+    if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+  }
+  window.addEventListener('pointerdown', startAudioOnce, {once:true});
+
+  // Utility: has move for single piece
+  function hasMoveForPiece(piece){ let s = deepClone(piece.shape); for(let rot=0;rot<4;rot++){ for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++) if(canPlaceAt(s,r,c)) return true; s = rotateMatrix(s); } return false; }
+
+  // Render pieces into big slots initially
+  renderPiecesSlots();
+
+  // Expose debug on window
   window.BD = { grid, pieces, resetAll };
 
 })();
