@@ -1,255 +1,736 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Game Xếp Block Nâng Cao</title>
-  <style>
-    body {
-      background: #111;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 30px;
-      padding: 20px;
-    }
-    canvas {
-      background: #222;
-      border: 3px solid #555;
-    }
-    #info {
-      max-width: 200px;
-    }
-    .crown {
-      font-size: 20px;
-      color: gold;
-    }
-    button {
-      margin-top: 10px;
-      padding: 6px 12px;
-      background: #333;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Block Blast — Táo Bắc Việt</title>
+<style>
+:root{--bg:#071421;--panel:#081826;--accent:#ffd66b;--muted:#9fb0cc}
+html,body{height:100%;margin:0;background:var(--bg);color:#e6eef8;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;display:flex;align-items:flex-start;justify-content:center;padding:28px}
+.wrap{display:flex;gap:20px;align-items:flex-start}
+.board{background:linear-gradient(180deg,#071622,#05121a);padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+.hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;width:740px}
+.btn{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;color:#081018;font-weight:700;cursor:pointer}
+.canvas-wrap{width:740px;display:flex;justify-content:center}
+canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
+.right{width:300px;padding:14px;background:linear-gradient(#071322,#05101a);border-radius:12px}
+.small{font-size:13px;color:var(--muted)}
+.toast-wrap{position:fixed;left:50%;transform:translateX(-50%);top:18px;pointer-events:none;z-index:60}
+.toast{background:rgba(0,0,0,0.55);color:#fff;padding:8px 12px;border-radius:8px;margin-top:8px;opacity:0;transform:translateY(-8px) scale(.98);transition:all .28s cubic-bezier(.2,.9,.2,1)}
+.toast.show{opacity:1;transform:translateY(0) scale(1)}
+.next-row{display:flex;gap:12px;margin-top:8px}
+.next-slot{width:120px;height:120px;background:#06101a;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 6px rgba(0,0,0,0.6);cursor:pointer;user-select:none}
+.label{font-size:12px;color:var(--muted);margin-top:8px}
+.hud-left{display:flex;flex-direction:column;gap:6px}
+.hud-right{display:flex;gap:12px;align-items:center}
+.footer{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-size:13px}
+.crown{font-size:18px;margin-left:6px}
+#nameModal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:120;visibility:hidden}
+#nameModal.show{visibility:visible}
+.modalCard{background:#071827;padding:18px;border-radius:10px;min-width:320px}
+.input{width:100%;padding:8px;border-radius:8px;border:1px solid #224;outline:none;background:#0b1a24;color:#e6eef8}
+.smallNote{font-size:12px;color:#9fb0cc;margin-top:8px}
+.row{display:flex;gap:8px;align-items:center}
+</style>
 </head>
 <body>
-  <canvas id="game" width="300" height="600"></canvas>
-  <div id="info">
-    <h2>Block Game</h2>
-    <p>Người chơi: <span id="playerName"></span></p>
-    <p>Điểm: <span id="score">0</span></p>
-    <p>
-      Kỷ lục: <span id="highScore">0</span>
-      <span class="crown">👑</span>
-    </p>
-    <p>Lượt thua còn lại: <span id="lives">5</span></p>
-    <button onclick="restartGame()">Chơi lại</button>
+<div class="wrap">
+  <div class="board">
+    <div class="hud">
+      <div class="hud-left">
+        <div style="font-weight:800;font-size:18px">Block Blast</div>
+        <div class="small">Double-click next piece để xoay • Kéo thả để đặt</div>
+      </div>
+      <div class="hud-right">
+        <div class="small">Score: <strong id="score">0</strong></div>
+        <div class="small">High: <strong id="high">0</strong><span id="crown" class="crown" style="display:none">👑</span></div>
+        <button id="reset" class="btn">Reset</button>
+        <button id="mute" class="btn" style="background:#9fb0cc;color:#081018">Sound</button>
+      </div>
+    </div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="game" width="740" height="820"></canvas>
+    </div>
+
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;align-items:center">
+      <div class="small">Next pieces (double-click để xoay)</div>
+      <div class="next-row" id="nextRow"></div>
+    </div>
+
+    <div class="footer">
+      <span>© Táo Bắc Việt Team — Block Blast</span>
+    </div>
   </div>
 
-  <script>
-  const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d");
-  const ROWS = 20, COLS = 10, SIZE = 30;
-  let grid = createGrid();
-  let score = 0, combo = 0, lives = 5;
-  let currentPiece = null;
-  let dropInterval = 1000, lastDrop = 0;
-  let gameOver = false;
-  let rainbowMode = false;
+  <div class="right">
+    <div style="font-weight:700">Player</div>
+    <div class="small" style="margin-top:6px">Name: <strong id="playerName">Guest</strong></div>
+    <div style="margin-top:10px">
+      <div class="small">Lives remaining (fake loss): <strong id="lives">5</strong></div>
+      <div class="small" style="margin-top:8px">Combo: <strong id="combo">0</strong></div>
+      <div class="small" style="margin-top:8px">Pieces Bag: <strong id="bagCount">0</strong></div>
+    </div>
+    <div style="margin-top:12px">
+      <button id="undo" class="btn" style="background:#4aa3ff;color:#041018">Undo (1)</button>
+      <div class="smallNote">Gợi ý: Double click next-slot để xoay, kéo khối từ khu bên phải đặt vào lưới.</div>
+    </div>
+  </div>
+</div>
 
-  // Shapes (thêm cả bậc thang)
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Name modal -->
+<div id="nameModal"><div class="modalCard">
+  <div style="font-weight:700;margin-bottom:8px">Xin chào! Nhập tên để bắt đầu</div>
+  <input id="nameInput" class="input" placeholder="Tên của bạn..." />
+  <div style="margin-top:10px" class="row">
+    <button id="nameSave" class="btn">Bắt đầu</button>
+    <button id="skipName" class="btn" style="background:#4a5568">Bỏ qua</button>
+  </div>
+  <div class="smallNote">Tên sẽ được lưu lại trên trình duyệt (localStorage).</div>
+</div></div>
+
+<script>
+/* Block Blast HTML implementation
+   - Grid 9x9
+   - Drag & drop pieces, double click next-slot to rotate
+   - Bag randomizer, varied shapes (including stairs)
+   - Points per placed cell, combo for clears
+   - 5 fake losses before real loss
+   - Rainbow effect when grid empty
+   - Name input stored in localStorage
+   - WebAudio synth sounds
+*/
+
+(() => {
+  // CONFIG
+  const GRID = 9, CELL = 56, OFFSET = 10;
+  const BOARD_W = GRID*CELL, BOARD_H = GRID*CELL;
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const canvasWrap = document.getElementById('canvasWrap');
+  const scoreEl = document.getElementById('score');
+  const highEl = document.getElementById('high');
+  const resetBtn = document.getElementById('reset');
+  const muteBtn = document.getElementById('mute');
+  const toastWrap = document.getElementById('toastWrap');
+  const nextRow = document.getElementById('nextRow');
+  const playerNameEl = document.getElementById('playerName');
+  const livesEl = document.getElementById('lives');
+  const comboEl = document.getElementById('combo');
+  const bagCountEl = document.getElementById('bagCount');
+  const crownEl = document.getElementById('crown');
+  const undoBtn = document.getElementById('undo');
+
+  // canvas sizing (for DPR)
+  function adjustCanvas(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.style.width = (BOARD_W + OFFSET*2 + 120) + 'px';
+    canvas.style.height = (BOARD_H + OFFSET*2 + 200) + 'px';
+    canvas.width = Math.round((BOARD_W + OFFSET*2 + 120) * dpr);
+    canvas.height = Math.round((BOARD_H + OFFSET*2 + 200) * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  adjustCanvas();
+  window.addEventListener('resize', adjustCanvas);
+
+  // Shapes (matrix), include stairs
   const SHAPES = [
-    [[1,1,1,1]],                   // I
-    [[1,1],[1,1]],                 // O
-    [[0,1,0],[1,1,1]],             // T
-    [[1,0,0],[1,1,1]],             // L
-    [[0,0,1],[1,1,1]],             // J
-    [[0,1,1],[1,1,0]],             // S
-    [[1,1,0],[0,1,1]],             // Z
-    [[1,1,0],[0,1,1],[0,0,1]]      // Bậc thang (stairs)
+    [[1,1,1],[0,1,0]],       // T
+    [[1,1,1,1]],             // I
+    [[1,1],[1,1]],           // O
+    [[1,0,0],[1,1,1]],       // L
+    [[0,0,1],[1,1,1]],       // J
+    [[0,1,1],[1,1,0]],       // S
+    [[1,1,0],[0,1,1]],       // Z
+    [[1,0],[1,1],[1,0]],     // small T-like
+    [[1,1,0],[0,1,0],[0,1,0]],// weird
+    [[1,0],[1,0],[1,1]],     // corner tall
+    [[1,1,0],[0,1,0],[0,1,1]],// step-like
+    [[1,0],[1,0],[1,0],[1,0]],// vertical line 4x1
+    // explicit stairs (2-step)
+    [[1,1,0],[0,1,1]],       // stair (same as Z but acts as stair)
+    // small domino and tri
+    [[1,1,1]],               // 3-long
+    [[1,1]],                 // 2x1
   ];
 
-  const COLORS = ["cyan","yellow","purple","orange","blue","green","red","pink"];
+  const PALETTE = ['#FF6B6B','#FF9F43','#FFD66B','#9AE66A','#6BCBFF','#6B8CFF','#C27BFF','#9bf','#f9b','#7ff','#f78'];
 
-  // LocalStorage: tên + highscore
-  let playerName = localStorage.getItem("playerName");
-  if (!playerName) {
-    playerName = prompt("Nhập tên của bạn:");
-    localStorage.setItem("playerName", playerName);
-  }
-  document.getElementById("playerName").textContent = playerName;
-  let highScore = parseInt(localStorage.getItem("highScore") || "0");
-  document.getElementById("highScore").textContent = highScore;
+  // Game state
+  let grid = [];
+  let pieces = []; // next pieces (3)
+  let bag = [];
+  let score = 0, highScore = 0, combo = 0;
+  let dragging = null;
+  let particles = [];
+  let anims = [];
+  let gameOver = false;
+  let lives = parseInt(localStorage.getItem('bb_lives_remaining') || '5', 10);
+  let fakeLossesRemaining = lives; // 5 initial
+  let undoCount = 1;
+  let historyStack = [];
+  let isMuted = false;
 
-  // Grid
-  function createGrid() {
-    return Array.from({length: ROWS}, () => Array(COLS).fill(null));
-  }
+  // audio (WebAudio synth)
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioCtx();
+  const master = audioCtx.createGain(); master.gain.value = 1; master.connect(audioCtx.destination);
 
-  // Piece
-  class Piece {
-    constructor(shape, color) {
-      this.shape = shape;
-      this.color = color;
-      this.x = Math.floor(COLS/2) - Math.floor(shape[0].length/2);
-      this.y = 0;
-    }
-    draw() {
-      this.shape.forEach((row,i) => row.forEach((cell,j)=>{
-        if(cell){
-          ctx.fillStyle = this.color;
-          ctx.fillRect((this.x+j)*SIZE, (this.y+i)*SIZE, SIZE, SIZE);
-          ctx.strokeStyle="#111";
-          ctx.strokeRect((this.x+j)*SIZE, (this.y+i)*SIZE, SIZE, SIZE);
-        }
-      }));
-    }
-    collide() {
-      return this.shape.some((row,i)=>row.some((cell,j)=>{
-        if(cell){
-          let nx = this.x+j, ny = this.y+i;
-          if(nx<0||nx>=COLS||ny>=ROWS) return true;
-          if(ny>=0 && grid[ny][nx]) return true;
-        }
-        return false;
-      }));
-    }
-    move(dx,dy) {
-      this.x+=dx; this.y+=dy;
-      if(this.collide()){ this.x-=dx; this.y-=dy; return false;}
-      return true;
-    }
-    rotate() {
-      let m = this.shape, N=m.length;
-      let r = Array.from({length:N},(_,i)=>Array(N).fill(0));
-      for(let i=0;i<N;i++)for(let j=0;j<N;j++)r[j][N-1-i]=m[i][j];
-      let old=this.shape; this.shape=r;
-      if(this.collide()) this.shape=old;
-    }
-    lock() {
-      this.shape.forEach((row,i)=>row.forEach((cell,j)=>{
-        if(cell){
-          let nx=this.x+j, ny=this.y+i;
-          if(ny>=0) grid[ny][nx]=this.color;
-        }
-      }));
-      // Cộng điểm theo số ô
-      let cells = this.shape.flat().filter(c=>c).length;
-      score += cells; updateScore();
-      clearLines();
-      spawnPiece();
-    }
+  function playTone(freq, type='sine', dur=0.15, volume=0.08){
+    if(isMuted) return;
+    if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.value = 0.0001;
+    o.connect(g); g.connect(master);
+    const now = audioCtx.currentTime;
+    g.gain.linearRampToValueAtTime(volume, now+0.002);
+    o.start(now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now+dur);
+    o.stop(now+dur+0.02);
   }
 
-  function drawGrid() {
-    ctx.fillStyle="#222";
-    ctx.fillRect(0,0,COLS*SIZE,ROWS*SIZE);
-    for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
-      if(grid[y][x]){
-        ctx.fillStyle=grid[y][x];
-        ctx.fillRect(x*SIZE,y*SIZE,SIZE,SIZE);
-        ctx.strokeStyle="#111";
-        ctx.strokeRect(x*SIZE,y*SIZE,SIZE,SIZE);
+  function playClick(){ playTone(900,'sine',0.18,0.12); }
+  function playClear(){ playTone(420,'sawtooth',0.42,0.16); playTone(660,'sawtooth',0.36,0.1); }
+  function playFail(){ playTone(140,'sine',0.5,0.14); }
+
+  // helpers
+  function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
+  function randColor(){ return PALETTE[Math.floor(Math.random()*PALETTE.length)]; }
+
+  // grid helpers
+  function resetGrid(){ grid = Array(GRID).fill().map(()=>Array(GRID).fill(0)); }
+  resetGrid();
+
+  // Bag randomizer (refill with all shapes indices)
+  function refillBag(){
+    bag = [];
+    for(let i=0;i<SHAPES.length;i++) bag.push(i);
+    // shuffle
+    for(let i=bag.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [bag[i],bag[j]]=[bag[j],bag[i]]; }
+  }
+
+  function nextFromBag(){
+    if(bag.length===0) refillBag();
+    const idx = bag.pop();
+    updateBagCount();
+    return { shape: deepClone(SHAPES[idx]), color: randColor() };
+  }
+
+  function updateBagCount(){ bagCountEl.textContent = bag.length; }
+
+  function generatePieces(){
+    pieces = [];
+    for(let i=0;i<3;i++){
+      pieces.push(Object.assign(nextFromBag(), {
+        x: OFFSET + 60 + i*180,
+        y: OFFSET + BOARD_H + 36,
+        spawnX: OFFSET + 60 + i*180,
+        spawnY: OFFSET + BOARD_H + 36
+      }));
+    }
+    // if no moves with these pieces -> immediate fake loss handling later when needed
+    populateNextRow();
+  }
+
+  // draw functions
+  function draw(){
+    // background
+    ctx.fillStyle = '#06121a';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    const bx = OFFSET, by = OFFSET;
+    // board bg
+    ctx.fillStyle = '#04101a';
+    roundRectFill(bx-6,by-6,BOARD_W+12,BOARD_H+12,12);
+    ctx.fillStyle = '#031018';
+    roundRectFill(bx,by,BOARD_W,BOARD_H,8);
+
+    // cells
+    let hasAny = false;
+    for(let r=0;r<GRID;r++){
+      for(let c=0;c<GRID;c++){
+        const x = bx + c*CELL, y = by + r*CELL;
+        ctx.fillStyle = grid[r][c] ? grid[r][c] : 'rgba(255,255,255,0.02)';
+        roundRectFill(x+4,y+4,CELL-8,CELL-8,6);
+        ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+        ctx.strokeRect(x+4,y+4,CELL-8,CELL-8);
+        if(grid[r][c]) hasAny = true;
+      }
+    }
+
+    // rainbow when empty
+    if(!hasAny){
+      drawRainbow();
+    }
+
+    // anims & particles
+    anims.forEach(a => {
+      const p = Math.min((performance.now()-a.start)/a.dur,1);
+      if(a.type === 'row'){
+        const ry = by + a.index*CELL + 4;
+        const gx1 = bx + ( - (1-p) * (BOARD_W) );
+        const gx2 = gx1 + BOARD_W*1.2;
+        const g = ctx.createLinearGradient(gx1, ry, gx2, ry + CELL - 8);
+        [0,0.14,0.28,0.42,0.56,0.7,0.86,1.0].forEach((s,i)=>{
+          const hue = (i*360/8 + p*360) % 360;
+          g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`);
+        });
+        ctx.fillStyle = g;
+        roundRectFill(bx+4, ry, BOARD_W-8, CELL-8, 6);
+      } else if(a.type === 'col'){
+        const cx = bx + a.index*CELL + 4;
+        const gy1 = by + ( - (1-p) * (BOARD_H) );
+        const gy2 = gy1 + BOARD_H*1.2;
+        const g = ctx.createLinearGradient(cx, gy1, cx + CELL - 8, gy2);
+        [0,0.14,0.28,0.42,0.56,0.7,0.86,1.0].forEach((s,i)=>{
+          const hue = (i*360/8 + p*360) % 360;
+          g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`);
+        });
+        ctx.fillStyle = g;
+        roundRectFill(cx, by+4, CELL-8, BOARD_H-8, 6);
+      }
+    });
+    anims = anims.filter(a => (performance.now()-a.start) < a.dur);
+
+    updateAndDrawParticles();
+
+    // draw waiting pieces
+    pieces.forEach(p => drawPiece(p,false));
+
+    // dragging
+    if(dragging) drawPiece(dragging,true);
+  }
+
+  function roundRectFill(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function drawPiece(p, isDragging){
+    const shape = p.shape;
+    for(let r=0;r<shape.length;r++) for(let c=0;c<shape[0].length;c++) if(shape[r][c]){
+      const x = (isDragging ? p.x : p.x) + c*CELL;
+      const y = (isDragging ? p.y : p.y) + r*CELL;
+      // shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.36)';
+      roundRectFill(x+6,y+10,CELL-14,CELL-14,8);
+      // color
+      ctx.fillStyle = p.color;
+      roundRectFill(x+4,y+4,CELL-18,CELL-18,8);
+      // shine
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fillRect(x+10,y+10,(CELL-28)*0.6,8);
+    }
+
+    // preview overlay if dragging -> show ghost on grid
+    if(isDragging){
+      const col = Math.floor((p.x - OFFSET)/CELL);
+      const row = Math.floor((p.y - OFFSET)/CELL);
+      const valid = canPlaceAt(p.shape,row,col);
+      if(row !== null && col !== null){
+        for(let r=0;r<p.shape.length;r++) for(let c=0;c<p.shape[0].length;c++) if(p.shape[r][c]){
+          const gx = OFFSET + (col+c)*CELL + 4;
+          const gy = OFFSET + (row+r)*CELL + 4;
+          ctx.globalAlpha = valid ? 0.28 : 0.16;
+          ctx.fillStyle = valid ? '#9ef6ff' : '#ff9e9e';
+          roundRectFill(gx, gy, CELL-8, CELL-8, 6);
+          ctx.globalAlpha = 1;
+        }
       }
     }
   }
 
-  function spawnPiece() {
-    const idx=Math.floor(Math.random()*SHAPES.length);
-    currentPiece=new Piece(SHAPES[idx],COLORS[idx]);
-    if(currentPiece.collide()){ // không spawn được
-      lives--;
-      document.getElementById("lives").textContent=lives;
-      if(lives>0){
-        grid=createGrid(); // reset lưới
-        currentPiece=null;
-        rainbowMode=true;
-      } else {
-        gameOver=true;
-        if(score>highScore){
-          highScore=score;
-          localStorage.setItem("highScore",highScore);
+  // placement check
+  function canPlaceAt(shape,row,col){
+    if(row===null||col===null) return false;
+    for(let r=0;r<shape.length;r++) for(let c=0;c<shape[0].length;c++) if(shape[r][c]){
+      const rr = row+r, cc = col+c;
+      if(rr<0||cc<0||rr>=GRID||cc>=GRID) return false;
+      if(grid[rr][cc]) return false;
+    }
+    return true;
+  }
+
+  // place piece
+  function placePieceAt(p,row,col){
+    // save history
+    historyStack.push({grid:deepClone(grid),score,combo,fakeLossesRemaining});
+    if(historyStack.length>6) historyStack.shift();
+
+    const placedCells = [];
+    for(let r=0;r<p.shape.length;r++) for(let c=0;c<p.shape[0].length;c++) if(p.shape[r][c]){
+      const rr = row+r, cc = col+c;
+      grid[rr][cc] = p.color;
+      placedCells.push({r:rr,c:cc});
+    }
+    playClick();
+
+    // score: + per placed cell
+    const cellsPlaced = placedCells.length;
+    const basePts = cellsPlaced * 8;
+    score += basePts;
+    scoreEl.textContent = score;
+
+    // clear lines
+    const pre = deepClone(grid);
+    const cleared = doClearLines();
+    if(cleared.count>0){
+      // spawn particles
+      const spawnCells = [];
+      cleared.rows.forEach(r=>{ for(let c=0;c<GRID;c++) spawnCells.push({r,c,color:pre[r][c]||'#fff'}); });
+      cleared.cols.forEach(c=>{ for(let r=0;r<GRID;r++) spawnCells.push({r,c,color:pre[r][c]||'#fff'}); });
+      spawnCells.forEach(sc=>spawnParticlesAtCell(sc.r,sc.c,sc.color));
+      const now = performance.now();
+      cleared.rows.forEach(r=>anims.push({type:'row',index:r,start:now,dur:900}));
+      cleared.cols.forEach(c=>anims.push({type:'col',index:c,start:now,dur:900}));
+
+      // scoring: cleared.count * 12 * linesCount * comboMultiplier
+      const linesCount = Math.max(cleared.rows.length+cleared.cols.length,1);
+      combo = Math.max(1,combo)+ (linesCount-1);
+      const pts = cleared.count * 12 * linesCount * combo;
+      score += pts;
+      playClear();
+      showToast(`🔥 Combo x${combo} +${pts} pts`,1400);
+    } else {
+      combo = 0;
+    }
+
+    // update highscore if needed
+    if(score > highScore){ highScore = score; localStorage.setItem('bb_high', String(highScore)); updateHighUI(); }
+
+    // refill pieces if needed
+    if(pieces.length === 0) generatePieces();
+    else if(!hasAnyMoveForPieces(pieces)){ // if there are pieces left but no moves -> generate new set (to avoid immediate loss)
+      generatePieces();
+    }
+
+    // check lose condition (no moves)
+    if(!hasAnyMoveForPieces(pieces)){
+      handleNoMoves();
+    }
+  }
+
+  // clearing rows/cols
+  function doClearLines(){
+    const rowsCleared = [], colsCleared = [];
+    // rows
+    for(let r=0;r<GRID;r++){
+      if(grid[r].every(cell=>cell)) rowsCleared.push(r);
+    }
+    // cols
+    for(let c=0;c<GRID;c++){
+      let full=true; for(let r=0;r<GRID;r++){ if(!grid[r][c]) { full=false; break; } }
+      if(full) colsCleared.push(c);
+    }
+    // clear them
+    const map = {};
+    rowsCleared.forEach(r=>{ for(let c=0;c<GRID;c++) map[`${r}_${c}`]=true; });
+    colsCleared.forEach(c=>{ for(let r=0;r<GRID;r++) map[`${r}_${c}`]=true; });
+    const keys = Object.keys(map);
+    keys.forEach(k=>{ const [r,c]=k.split('_').map(Number); grid[r][c]=0; });
+    // update score for clears handled in placePieceAt
+    return {rows:rowsCleared, cols:colsCleared, count: keys.length};
+  }
+
+  // particles
+  let particlesArr = [];
+  function spawnParticlesAtCell(r,c,color){
+    const baseX = OFFSET + c*CELL + CELL/2;
+    const baseY = OFFSET + r*CELL + CELL/2;
+    const targetX = OFFSET + BOARD_W + 60;
+    const n = 6;
+    for(let i=0;i<n;i++){
+      particlesArr.push({
+        x: baseX, y: baseY,
+        vx: (targetX - baseX)/40 + (Math.random()-0.5)*2,
+        vy: (Math.random()-0.5)*2,
+        born: performance.now(), life: 700 + Math.random()*400, color
+      });
+    }
+    if(particlesArr.length > 600) particlesArr.splice(0, particlesArr.length-500);
+  }
+
+  function updateAndDrawParticles(){
+    const now = performance.now();
+    for(let i=particlesArr.length-1;i>=0;i--){
+      const p = particlesArr[i];
+      const t = now - p.born;
+      if(t > p.life){ particlesArr.splice(i,1); continue; }
+      p.x += p.vx; p.y += p.vy;
+      const a = 1 - t/p.life;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x-3,p.y-3,6,6);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // animations
+  function spawnShake(){ canvasWrap.classList.add('shake'); setTimeout(()=>canvasWrap.classList.remove('shake'),360); }
+
+  // check any moves for pieces across board with rotations
+  function hasAnyMoveForPieces(checkPieces){
+    for(const p of checkPieces){
+      let s = deepClone(p.shape);
+      for(let rot=0;rot<4;rot++){
+        for(let r=0;r<GRID;r++){
+          for(let c=0;c<GRID;c++){
+            if(canPlaceAt(s,r,c)) return true;
+          }
         }
+        s = rotateMatrix(s);
       }
     }
+    return false;
   }
 
-  function clearLines() {
-    let lines=0;
-    for(let y=ROWS-1;y>=0;y--){
-      if(grid[y].every(cell=>cell)){
-        grid.splice(y,1);
-        grid.unshift(Array(COLS).fill(null));
-        lines++; y++;
+  // rotate utilities
+  function rotateMatrix(m){
+    const R = m.length, C = m[0].length;
+    const out = Array(C).fill().map(()=>Array(R).fill(0));
+    for(let r=0;r<R;r++) for(let c=0;c<C;c++) out[c][R-1-r] = m[r][c];
+    return out;
+  }
+
+  // no-move handler -> fake loss
+  function handleNoMoves(){
+    // decrement fakeLossesRemaining
+    fakeLossesRemaining--;
+    livesEl.textContent = fakeLossesRemaining;
+    playFail();
+    showToast(`⚠️ Không còn nước đi — mất 1 lượt. Còn ${fakeLossesRemaining}`,1800);
+    // clear board but keep score
+    resetGrid();
+    // respawn pieces
+    generatePieces();
+    // if reached 0 -> final loss
+    if(fakeLossesRemaining <= 0){
+      showToast('💀 Thua thật — Điểm về 0', 2200);
+      score = 0;
+      scoreEl.textContent = score;
+      fakeLossesRemaining = 5;
+      livesEl.textContent = fakeLossesRemaining;
+      localStorage.setItem('bb_high', String(highScore)); // ensure high saved
+      // update local storage life resets
+    }
+  }
+
+  // double-click rotate for next-slot: implemented in populateNextRow()
+
+  // spawn pieces UI
+  function populateNextRow(){
+    nextRow.innerHTML = '';
+    for(let i=0;i<3;i++){
+      const p = pieces[i];
+      const slot = document.createElement('div');
+      slot.className = 'next-slot';
+      const c = document.createElement('canvas');
+      c.width = 86; c.height = 86;
+      const g = c.getContext('2d');
+      const smallCell = 18;
+      const offsetX = Math.floor((86 - p.shape[0].length*smallCell)/2);
+      const offsetY = Math.floor((86 - p.shape.length*smallCell)/2);
+      for(let r=0;r<p.shape.length;r++) for(let c0=0;c0<p.shape[0].length;c0++) if(p.shape[r][c0]){
+        g.fillStyle = p.color;
+        g.fillRect(offsetX + c0*smallCell + 2, offsetY + r*smallCell + 2, smallCell-4, smallCell-4);
       }
+      slot.appendChild(c);
+      // enable dragging from slot
+      slot.addEventListener('pointerdown', (e)=>{
+        if(gameOver) return;
+        // start dragging clone
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        dragging = { shape: deepClone(p.shape), color: p.color, x: e.clientX - rect.left - smallCell, y: e.clientY - rect.top - smallCell, spawnIndex:i };
+        // remove from pieces so slot empties visually
+        pieces.splice(i,1);
+        populateNextRow();
+        draw();
+        e.target.setPointerCapture?.(e.pointerId);
+      });
+      // double click rotate
+      slot.addEventListener('dblclick', (e)=>{
+        pieces[i].shape = rotateMatrix(pieces[i].shape);
+        populateNextRow();
+      });
+      nextRow.appendChild(slot);
     }
-    if(lines>0){
-      combo++;
-      score+=lines*10*combo;
-    } else combo=0;
-    updateScore();
   }
 
-  function updateScore(){
-    document.getElementById("score").textContent=score;
-    if(score>highScore){
-      highScore=score;
-      localStorage.setItem("highScore",highScore);
-      document.getElementById("highScore").textContent=highScore;
+  // pointer events on canvas for drag
+  let pointerOffset = {x:0,y:0};
+
+  canvas.addEventListener('pointerdown', (e)=>{
+    if(gameOver) return;
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    // If click on a waiting slot canvas, handled above. Here we allow picking up a placed waiting piece with dragging? Not required.
+  });
+
+  window.addEventListener('pointermove', (e)=> {
+    if(!dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    dragging.x = e.clientX - rect.left - CELL/2;
+    dragging.y = e.clientY - rect.top - CELL/2;
+    draw();
+  });
+
+  window.addEventListener('pointerup', (e)=>{
+    if(!dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const col = Math.floor((dragging.x - OFFSET) / CELL);
+    const row = Math.floor((dragging.y - OFFSET) / CELL);
+    if(canPlaceAt(dragging.shape,row,col)){
+      placePieceAt(dragging,row,col);
+      // if pieces empty fill new pieces
+      if(pieces.length === 0) generatePieces();
+    } else {
+      // animate return to next area
+      spawnShake();
+      // restore piece to pieces array at end
+      pieces.push({ shape: deepClone(dragging.shape), color: dragging.color, x: OFFSET + 60 + pieces.length*180, y: OFFSET + BOARD_H + 36, spawnX: OFFSET + 60 + pieces.length*180, spawnY: OFFSET + BOARD_H + 36 });
+      populateNextRow();
     }
+    dragging = null;
+    draw();
+  });
+
+  // rotate via double click on canvas while dragging (alternate)
+  canvas.addEventListener('dblclick', (e)=>{
+    if(!dragging) return;
+    dragging.shape = rotateMatrix(dragging.shape);
+    draw();
+  });
+
+  // check any move for one piece (utility)
+  function hasMoveForPiece(piece){
+    let s = deepClone(piece.shape);
+    for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++) if(canPlaceAt(s,r,c)) return true;
+    return false;
   }
 
-  // Hiệu ứng cầu vồng
+  // periodic render loop
+  function loop(){
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // rainbow when grid empty
   function drawRainbow(){
-    for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
-      let hue=(x+y*COLS+Date.now()/50)%360;
-      ctx.fillStyle=`hsl(${hue},100%,50%)`;
-      ctx.fillRect(x*SIZE,y*SIZE,SIZE,SIZE);
+    for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++){
+      const hue = (c + r*GRID + Math.floor(performance.now()/80)) % 360;
+      ctx.fillStyle = `hsl(${hue},80%,55%)`;
+      const x = OFFSET + c*CELL, y = OFFSET + r*CELL;
+      roundRectFill(x+4,y+4,CELL-8,CELL-8,6);
     }
   }
 
-  // Loop
-  function update(time=0){
-    if(gameOver){ ctx.fillStyle="white"; ctx.font="30px Arial"; ctx.fillText("GAME OVER",50,300); return;}
-    if(rainbowMode){ drawRainbow(); }
-    else{
-      drawGrid();
-      if(currentPiece) currentPiece.draw();
-      if(time-lastDrop>dropInterval){
-        if(!currentPiece.move(0,1)) currentPiece.lock();
-        lastDrop=time;
-      }
+  // toast
+  function showToast(text,dur=1400){
+    const d = document.createElement('div');
+    d.className = 'toast'; d.textContent = text; toastWrap.appendChild(d);
+    requestAnimationFrame(()=> d.classList.add('show'));
+    setTimeout(()=> { d.classList.remove('show'); setTimeout(()=> d.remove(),300); }, dur);
+  }
+
+  // reset & init
+  function resetAll(){
+    resetGrid();
+    refillBag();
+    generatePieces();
+    score = 0; scoreEl.textContent = score;
+    fakeLossesRemaining = 5; livesEl.textContent = fakeLossesRemaining;
+    combo = 0; comboEl.textContent = combo;
+    historyStack = [];
+    undoCount = 1;
+    updateHighUI();
+    draw();
+  }
+
+  // undo
+  undoBtn.addEventListener('click', ()=>{
+    if(undoCount<=0 || historyStack.length===0) { showToast('Không thể undo'); return; }
+    const last = historyStack.pop();
+    grid = deepClone(last.grid);
+    score = last.score; scoreEl.textContent = score;
+    combo = last.combo; comboEl.textContent = combo;
+    fakeLossesRemaining = last.fakeLossesRemaining; livesEl.textContent = fakeLossesRemaining;
+    undoCount--;
+    showToast('Đã undo');
+  });
+
+  // controls
+  resetBtn.addEventListener('click', ()=> { resetAll(); });
+  muteBtn.addEventListener('click', ()=>{
+    isMuted = !isMuted;
+    if(isMuted){ master.gain.setValueAtTime(0, audioCtx.currentTime); muteBtn.textContent='Muted'; muteBtn.style.background='#6b7280'; }
+    else { master.gain.setValueAtTime(1, audioCtx.currentTime); muteBtn.textContent='Sound'; muteBtn.style.background='#9fb0cc'; }
+  });
+
+  // highscore
+  function loadHigh(){ highScore = parseInt(localStorage.getItem('bb_high')||'0',10); updateHighUI(); }
+  function updateHighUI(){
+    highEl.textContent = highScore;
+    if(score >= highScore && highScore>0) crownEl.style.display='inline';
+    else crownEl.style.display = (score >= highScore && highScore===0) ? 'inline' : (localStorage.getItem('bb_holder') === (localStorage.getItem('bb_name')||'') ? 'inline':'none');
+  }
+
+  // name modal
+  const nameModal = document.getElementById('nameModal');
+  const nameInput = document.getElementById('nameInput');
+  const nameSave = document.getElementById('nameSave');
+  const skipName = document.getElementById('skipName');
+  function askNameOnce(){
+    const stored = localStorage.getItem('bb_name');
+    if(stored){ playerNameEl.textContent = stored; return; }
+    nameModal.classList.add('show');
+  }
+  nameSave.addEventListener('click', ()=>{
+    const v = nameInput.value.trim() || 'Guest';
+    localStorage.setItem('bb_name', v);
+    playerNameEl.textContent = v;
+    nameModal.classList.remove('show');
+  });
+  skipName.addEventListener('click', ()=>{
+    const v = 'Guest';
+    localStorage.setItem('bb_name', v);
+    playerNameEl.textContent = v;
+    nameModal.classList.remove('show');
+  });
+
+  // persistence
+  function saveHighIfNeeded(){
+    const prevHigh = parseInt(localStorage.getItem('bb_high')||'0',10);
+    if(score > prevHigh){
+      localStorage.setItem('bb_high', String(score));
+      localStorage.setItem('bb_holder', localStorage.getItem('bb_name') || 'Guest');
+      highScore = score;
+      updateHighUI();
+      showToast('🏆 New High Score!', 1600);
     }
-    requestAnimationFrame(update);
   }
 
-  // Input
-  document.addEventListener("keydown",e=>{
-    if(!currentPiece) return;
-    if(e.key==="ArrowLeft") currentPiece.move(-1,0);
-    if(e.key==="ArrowRight") currentPiece.move(1,0);
-    if(e.key==="ArrowDown") if(!currentPiece.move(0,1)) currentPiece.lock();
-  });
+  // initial boot
+  refillBag();
+  generatePieces();
+  loadHigh();
+  askNameOnce();
+  draw();
 
-  // Double click xoay
-  canvas.addEventListener("dblclick",()=>{
-    if(currentPiece) currentPiece.rotate();
-  });
+  // expose for debug
+  window.BB = { grid, pieces, resetAll };
 
-  function restartGame(){
-    score=0; lives=5; combo=0;
-    document.getElementById("score").textContent=0;
-    document.getElementById("lives").textContent=5;
-    grid=createGrid();
-    spawnPiece();
-    gameOver=false; rainbowMode=false;
-  }
-
-  restartGame();
-  update();
-  </script>
+})();
+</script>
 </body>
 </html>
