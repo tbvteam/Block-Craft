@@ -3,17 +3,19 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Block Blast — Táo Bắc Việt</title>
+<title>Block Deluxe — Táo Bắc Việt</title>
 <style>
-:root{--bg:#071421;--panel:#081826;--accent:#ffd66b;--muted:#9fb0cc}
-html,body{height:100%;margin:0;background:var(--bg);color:#e6eef8;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;display:flex;align-items:flex-start;justify-content:center;padding:28px}
+:root{
+  --bg:#071421; --panel:#081826; --accent:#ffd66b; --muted:#9fb0cc;
+}
+html,body{height:100%;margin:0;background:var(--bg);color:#e6eef8;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;display:flex;align-items:flex-start;justify-content:center;padding:20px}
 .wrap{display:flex;gap:20px;align-items:flex-start}
-.board{background:linear-gradient(180deg,#071622,#05121a);padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
-.hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;width:740px}
+.board{background:linear-gradient(180deg,#071827,#04121a);padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+.hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;width:760px}
 .btn{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;color:#081018;font-weight:700;cursor:pointer}
-.canvas-wrap{width:740px;display:flex;justify-content:center}
-canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
-.right{width:300px;padding:14px;background:linear-gradient(#071322,#05101a);border-radius:12px}
+.canvas-wrap{width:760px;display:flex;justify-content:center}
+canvas{background:#06121a;border-radius:8px;display:block;touch-action:none}
+.right{width:320px;padding:14px;background:linear-gradient(#071322,#05101a);border-radius:12px}
 .small{font-size:13px;color:var(--muted)}
 .toast-wrap{position:fixed;left:50%;transform:translateX(-50%);top:18px;pointer-events:none;z-index:60}
 .toast{background:rgba(0,0,0,0.55);color:#fff;padding:8px 12px;border-radius:8px;margin-top:8px;opacity:0;transform:translateY(-8px) scale(.98);transition:all .28s cubic-bezier(.2,.9,.2,1)}
@@ -31,6 +33,9 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
 .input{width:100%;padding:8px;border-radius:8px;border:1px solid #224;outline:none;background:#0b1a24;color:#e6eef8}
 .smallNote{font-size:12px;color:#9fb0cc;margin-top:8px}
 .row{display:flex;gap:8px;align-items:center}
+.continueBtn{position:fixed;right:24px;bottom:24px;background:#ffd66b;color:#081018;padding:10px 14px;border-radius:12px;font-weight:700;box-shadow:0 8px 20px rgba(0,0,0,0.5);display:none;z-index:200}
+.canvas-wrap.shake{animation:shake .36s ease-in-out}
+@keyframes shake{0%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}100%{transform:translateX(0)}}
 </style>
 </head>
 <body>
@@ -38,19 +43,19 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
   <div class="board">
     <div class="hud">
       <div class="hud-left">
-        <div style="font-weight:800;font-size:18px">Block Blast</div>
-        <div class="small">Double-click next piece để xoay • Kéo thả để đặt</div>
+        <div style="font-weight:800;font-size:18px">Block Deluxe</div>
+        <div class="small">Double-click next piece để xoay • Kéo & thả để đặt • Nhập tên lần đầu để lưu</div>
       </div>
       <div class="hud-right">
         <div class="small">Score: <strong id="score">0</strong></div>
-        <div class="small">High: <strong id="high">0</strong><span id="crown" class="crown" style="display:none">👑</span></div>
+        <div class="small">High: <strong id="high">0</strong><span id="crown" class="crown" style="display:none"> 👑</span></div>
         <button id="reset" class="btn">Reset</button>
         <button id="mute" class="btn" style="background:#9fb0cc;color:#081018">Sound</button>
       </div>
     </div>
 
     <div class="canvas-wrap" id="canvasWrap">
-      <canvas id="game" width="740" height="820"></canvas>
+      <canvas id="game" width="760" height="860"></canvas>
     </div>
 
     <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;align-items:center">
@@ -59,26 +64,27 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
     </div>
 
     <div class="footer">
-      <span>© Táo Bắc Việt Team — Block Blast</span>
+      <span>© Táo Bắc Việt Team — Block Deluxe</span>
     </div>
   </div>
 
   <div class="right">
     <div style="font-weight:700">Player</div>
     <div class="small" style="margin-top:6px">Name: <strong id="playerName">Guest</strong></div>
-    <div style="margin-top:10px">
-      <div class="small">Lives remaining (fake loss): <strong id="lives">5</strong></div>
+    <div style="margin-top:12px">
+      <div class="small">Fake Losses Remaining: <strong id="lives">5</strong></div>
       <div class="small" style="margin-top:8px">Combo: <strong id="combo">0</strong></div>
       <div class="small" style="margin-top:8px">Pieces Bag: <strong id="bagCount">0</strong></div>
     </div>
     <div style="margin-top:12px">
       <button id="undo" class="btn" style="background:#4aa3ff;color:#041018">Undo (1)</button>
-      <div class="smallNote">Gợi ý: Double click next-slot để xoay, kéo khối từ khu bên phải đặt vào lưới.</div>
+      <div class="smallNote" style="margin-top:8px">Gợi ý: Double-click next-slot để xoay, kéo khối từ khu bên phải đặt vào lưới.</div>
     </div>
   </div>
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
+<button id="continueBtn" class="continueBtn">Tiếp tục (mất 1 lượt)</button>
 
 <!-- Name modal -->
 <div id="nameModal"><div class="modalCard">
@@ -92,23 +98,23 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
 </div></div>
 
 <script>
-/* Block Blast HTML implementation
-   - Grid 9x9
-   - Drag & drop pieces, double click next-slot to rotate
-   - Bag randomizer, varied shapes (including stairs)
-   - Points per placed cell, combo for clears
-   - 5 fake losses before real loss
-   - Rainbow effect when grid empty
-   - Name input stored in localStorage
-   - WebAudio synth sounds
+/* Block Deluxe — Full integrated version
+ - 9x9 grid, many shapes (incl stairs)
+ - Drag & drop, double-click rotate on next-slot or while dragging
+ - Score by cell placed, combo bonuses for clears
+ - 5 fake losses (turns) before final loss (score reset)
+ - Rainbow per-cell when grid empty
+ - Name prompt saved to localStorage
+ - Highscore saved, crown shown
+ - Sounds with WebAudio
 */
 
 (() => {
   // CONFIG
   const GRID = 9, CELL = 56, OFFSET = 10;
-  const BOARD_W = GRID*CELL, BOARD_H = GRID*CELL;
+  const BOARD_W = GRID * CELL, BOARD_H = GRID * CELL;
   const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d', { alpha: false });
+  const ctx = canvas.getContext('2d', {alpha:false});
   const canvasWrap = document.getElementById('canvasWrap');
   const scoreEl = document.getElementById('score');
   const highEl = document.getElementById('high');
@@ -122,8 +128,9 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
   const bagCountEl = document.getElementById('bagCount');
   const crownEl = document.getElementById('crown');
   const undoBtn = document.getElementById('undo');
+  const continueBtn = document.getElementById('continueBtn');
 
-  // canvas sizing (for DPR)
+  // DPR sizing
   function adjustCanvas(){
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.style.width = (BOARD_W + OFFSET*2 + 120) + 'px';
@@ -135,165 +142,156 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
   adjustCanvas();
   window.addEventListener('resize', adjustCanvas);
 
-  // Shapes (matrix), include stairs
+  // palette & shapes (include stairs and varied)
+  const PALETTE = ['#FF6B6B','#FF9F43','#FFD66B','#9AE66A','#6BCBFF','#6B8CFF','#C27BFF','#9bf','#f9b','#7ff'];
   const SHAPES = [
-    [[1,1,1],[0,1,0]],       // T
-    [[1,1,1,1]],             // I
-    [[1,1],[1,1]],           // O
-    [[1,0,0],[1,1,1]],       // L
-    [[0,0,1],[1,1,1]],       // J
-    [[0,1,1],[1,1,0]],       // S
-    [[1,1,0],[0,1,1]],       // Z
-    [[1,0],[1,1],[1,0]],     // small T-like
-    [[1,1,0],[0,1,0],[0,1,0]],// weird
-    [[1,0],[1,0],[1,1]],     // corner tall
-    [[1,1,0],[0,1,0],[0,1,1]],// step-like
-    [[1,0],[1,0],[1,0],[1,0]],// vertical line 4x1
-    // explicit stairs (2-step)
-    [[1,1,0],[0,1,1]],       // stair (same as Z but acts as stair)
-    // small domino and tri
-    [[1,1,1]],               // 3-long
-    [[1,1]],                 // 2x1
+    [[1,1,1,1]],           // I4
+    [[1,1,1]],             // 3
+    [[1,1]],               // 2
+    [[1,1],[1,1]],         // O
+    [[1,0],[1,0],[1,1]],   // L tall
+    [[0,1],[0,1],[1,1]],   // J tall
+    [[1,1,1],[1,0,0]],     // L
+    [[1,1,1],[0,0,1]],     // J
+    [[1,1,1],[0,1,0]],     // T
+    [[1,1,0],[0,1,1]],     // Z
+    [[0,1,1],[1,1,0]],     // S
+    [[1,0],[1,1]],         // small corner
+    [[0,1],[1,1]],         // other corner
+    [[1,0,1],[1,1,1]],     // hollow-ish, more complex
+    [[1,1,0],[0,1,0],[0,1,1]], // complex step-like
+    [[1,0],[1,0],[1,0],[1,0]], // I vertical 4
+    [[1,1,0],[0,1,1]],     // stair (2-step)
+    [[1,0,0],[1,1,1],[0,0,1]], // Z-like bigger
+    [[1,1,1,1,1]],         // 5-long (rare)
+    [[1,1,1],[1,1,1]],     // 3x2 block
   ];
 
-  const PALETTE = ['#FF6B6B','#FF9F43','#FFD66B','#9AE66A','#6BCBFF','#6B8CFF','#C27BFF','#9bf','#f9b','#7ff','#f78'];
-
-  // Game state
+  // state
   let grid = [];
-  let pieces = []; // next pieces (3)
+  let pieces = []; // waiting pieces (3)
   let bag = [];
   let score = 0, highScore = 0, combo = 0;
   let dragging = null;
   let particles = [];
   let anims = [];
   let gameOver = false;
-  let lives = parseInt(localStorage.getItem('bb_lives_remaining') || '5', 10);
-  let fakeLossesRemaining = lives; // 5 initial
+  let fakeLossesRemaining = parseInt(localStorage.getItem('bb_fake_losses') || '5', 10);
   let undoCount = 1;
   let historyStack = [];
   let isMuted = false;
 
-  // audio (WebAudio synth)
+  // audio setup
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   const audioCtx = new AudioCtx();
   const master = audioCtx.createGain(); master.gain.value = 1; master.connect(audioCtx.destination);
 
-  function playTone(freq, type='sine', dur=0.15, volume=0.08){
-    if(isMuted) return;
-    if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+  function makeTone(freq, type='sine', dur=0.18, vol=0.08){
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
-    o.type = type;
-    o.frequency.value = freq;
+    o.type = type; o.frequency.value = freq;
     g.gain.value = 0.0001;
     o.connect(g); g.connect(master);
     const now = audioCtx.currentTime;
-    g.gain.linearRampToValueAtTime(volume, now+0.002);
+    g.gain.linearRampToValueAtTime(vol, now+0.006);
     o.start(now);
     g.gain.exponentialRampToValueAtTime(0.0001, now+dur);
     o.stop(now+dur+0.02);
   }
-
-  function playClick(){ playTone(900,'sine',0.18,0.12); }
-  function playClear(){ playTone(420,'sawtooth',0.42,0.16); playTone(660,'sawtooth',0.36,0.1); }
-  function playFail(){ playTone(140,'sine',0.5,0.14); }
+  function playPlace(){ if(isMuted) return; makeTone(880,'sine',0.18,0.12); }
+  function playClear(){ if(isMuted) return; const now = audioCtx.currentTime; [420,660,880].forEach((f,i)=>{ const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.type='sawtooth';o.frequency.value=f;o.connect(g);g.connect(master);g.gain.value=0.0001;g.gain.linearRampToValueAtTime(0.14/(i+1),now+0.002);g.gain.exponentialRampToValueAtTime(0.0001,now+0.6);o.start(now);o.stop(now+0.6);}); }
+  function playFail(){ if(isMuted) return; makeTone(130,'sine',0.5,0.12); }
+  function playWin(){ if(isMuted) return; makeTone(1200,'triangle',0.38,0.14); makeTone(1700,'sine',0.32,0.08); }
 
   // helpers
   function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
   function randColor(){ return PALETTE[Math.floor(Math.random()*PALETTE.length)]; }
+  function randShapeIndex(){ return Math.floor(Math.random()*SHAPES.length); }
+  function rotateMatrix(m){
+    const R=m.length, C=m[0].length; const out=Array(C).fill().map(()=>Array(R).fill(0));
+    for(let r=0;r<R;r++) for(let c=0;c<C;c++) out[c][R-1-r]=m[r][c];
+    return out;
+  }
 
-  // grid helpers
+  // grid init
   function resetGrid(){ grid = Array(GRID).fill().map(()=>Array(GRID).fill(0)); }
   resetGrid();
 
-  // Bag randomizer (refill with all shapes indices)
+  // bag randomizer
   function refillBag(){
     bag = [];
     for(let i=0;i<SHAPES.length;i++) bag.push(i);
-    // shuffle
     for(let i=bag.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [bag[i],bag[j]]=[bag[j],bag[i]]; }
+    updateBagCount();
   }
-
   function nextFromBag(){
     if(bag.length===0) refillBag();
     const idx = bag.pop();
     updateBagCount();
     return { shape: deepClone(SHAPES[idx]), color: randColor() };
   }
-
   function updateBagCount(){ bagCountEl.textContent = bag.length; }
 
+  // ensure pieces spawn with at least one valid placement
   function generatePieces(){
-    pieces = [];
-    for(let i=0;i<3;i++){
-      pieces.push(Object.assign(nextFromBag(), {
-        x: OFFSET + 60 + i*180,
-        y: OFFSET + BOARD_H + 36,
-        spawnX: OFFSET + 60 + i*180,
-        spawnY: OFFSET + BOARD_H + 36
-      }));
-    }
-    // if no moves with these pieces -> immediate fake loss handling later when needed
+    // try attempt multiple times to guarantee at least one is placeable
+    let attempts=0;
+    do {
+      pieces = [];
+      for(let i=0;i<3;i++){
+        pieces.push(Object.assign(nextFromBag(), {
+          x: OFFSET + 60 + i*180,
+          y: OFFSET + BOARD_H + 36,
+          spawnX: OFFSET + 60 + i*180,
+          spawnY: OFFSET + BOARD_H + 36
+        }));
+      }
+      attempts++;
+      if(attempts>18) break; // fallback
+    } while(!hasAnyMoveForPieces(pieces));
     populateNextRow();
   }
 
   // draw functions
   function draw(){
-    // background
+    // bg
     ctx.fillStyle = '#06121a';
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
     const bx = OFFSET, by = OFFSET;
     // board bg
-    ctx.fillStyle = '#04101a';
-    roundRectFill(bx-6,by-6,BOARD_W+12,BOARD_H+12,12);
-    ctx.fillStyle = '#031018';
-    roundRectFill(bx,by,BOARD_W,BOARD_H,8);
+    ctx.fillStyle='#031018'; roundRectFill(bx-6,by-6,BOARD_W+12,BOARD_H+12,12);
+    ctx.fillStyle='#041018'; roundRectFill(bx,by,BOARD_W,BOARD_H,8);
 
-    // cells
-    let hasAny = false;
+    // cells + detect empty
+    let hasAny=false;
     for(let r=0;r<GRID;r++){
       for(let c=0;c<GRID;c++){
         const x = bx + c*CELL, y = by + r*CELL;
-        ctx.fillStyle = grid[r][c] ? grid[r][c] : 'rgba(255,255,255,0.02)';
+        if(grid[r][c]){ hasAny=true; ctx.fillStyle = grid[r][c]; }
+        else ctx.fillStyle = 'rgba(255,255,255,0.02)';
         roundRectFill(x+4,y+4,CELL-8,CELL-8,6);
-        ctx.strokeStyle = 'rgba(0,0,0,0.12)';
-        ctx.strokeRect(x+4,y+4,CELL-8,CELL-8);
-        if(grid[r][c]) hasAny = true;
+        ctx.strokeStyle='rgba(0,0,0,0.12)'; ctx.strokeRect(x+4,y+4,CELL-8,CELL-8);
       }
     }
 
-    // rainbow when empty
+    // rainbow when empty (each cell its own hue, top->down left->right)
     if(!hasAny){
-      drawRainbow();
+      for(let r=0;r<GRID;r++){
+        for(let c=0;c<GRID;c++){
+          const hue = ((r*GRID + c) * 16 + Math.floor(performance.now()/80)) % 360;
+          ctx.fillStyle = `hsl(${hue},85%,55%)`;
+          const x = bx + c*CELL + 4, y = by + r*CELL + 4;
+          roundRectFill(x,y,CELL-8,CELL-8,6);
+        }
+      }
     }
 
-    // anims & particles
-    anims.forEach(a => {
+    // animations for cleared rows/cols
+    anims.forEach(a=>{
       const p = Math.min((performance.now()-a.start)/a.dur,1);
-      if(a.type === 'row'){
-        const ry = by + a.index*CELL + 4;
-        const gx1 = bx + ( - (1-p) * (BOARD_W) );
-        const gx2 = gx1 + BOARD_W*1.2;
-        const g = ctx.createLinearGradient(gx1, ry, gx2, ry + CELL - 8);
-        [0,0.14,0.28,0.42,0.56,0.7,0.86,1.0].forEach((s,i)=>{
-          const hue = (i*360/8 + p*360) % 360;
-          g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`);
-        });
-        ctx.fillStyle = g;
-        roundRectFill(bx+4, ry, BOARD_W-8, CELL-8, 6);
-      } else if(a.type === 'col'){
-        const cx = bx + a.index*CELL + 4;
-        const gy1 = by + ( - (1-p) * (BOARD_H) );
-        const gy2 = gy1 + BOARD_H*1.2;
-        const g = ctx.createLinearGradient(cx, gy1, cx + CELL - 8, gy2);
-        [0,0.14,0.28,0.42,0.56,0.7,0.86,1.0].forEach((s,i)=>{
-          const hue = (i*360/8 + p*360) % 360;
-          g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`);
-        });
-        ctx.fillStyle = g;
-        roundRectFill(cx, by+4, CELL-8, BOARD_H-8, 6);
-      }
+      if(a.type==='row'){ const ry = by + a.index*CELL + 4; const gx1 = bx + ( - (1-p) * (BOARD_W) ); const gx2 = gx1 + BOARD_W*1.2; const g = ctx.createLinearGradient(gx1, ry, gx2, ry + CELL - 8); [0,0.14,0.28,0.42,0.56,0.7,0.86,1].forEach((s,i)=>{ const hue=(i*360/8 + p*360)%360; g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`); }); ctx.fillStyle=g; roundRectFill(bx+4, ry, BOARD_W-8, CELL-8,6); }
+      if(a.type==='col'){ const cx = bx + a.index*CELL + 4; const gy1 = by + ( - (1-p) * (BOARD_H) ); const gy2 = gy1 + BOARD_H*1.2; const g = ctx.createLinearGradient(cx, gy1, cx + CELL - 8, gy2); [0,0.14,0.28,0.42,0.56,0.7,0.86,1].forEach((s,i)=>{ const hue=(i*360/8 + p*360)%360; g.addColorStop(s, `hsla(${hue},90%,60%,${1-p})`); }); ctx.fillStyle=g; roundRectFill(cx, by+4, CELL-8, BOARD_H-8,6); }
     });
     anims = anims.filter(a => (performance.now()-a.start) < a.dur);
 
@@ -307,85 +305,77 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
   }
 
   function roundRectFill(x,y,w,h,r){
-    ctx.beginPath();
-    ctx.moveTo(x+r,y);
-    ctx.arcTo(x+w,y,x+w,y+h,r);
-    ctx.arcTo(x+w,y+h,x,y+h,r);
-    ctx.arcTo(x,y+h,x,y,r);
-    ctx.arcTo(x,y,x+w,y,r);
-    ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); ctx.fill();
   }
 
-  function drawPiece(p, isDragging){
+  function drawPiece(p,isDragging){
     const shape = p.shape;
-    for(let r=0;r<shape.length;r++) for(let c=0;c<shape[0].length;c++) if(shape[r][c]){
-      const x = (isDragging ? p.x : p.x) + c*CELL;
-      const y = (isDragging ? p.y : p.y) + r*CELL;
-      // shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.36)';
-      roundRectFill(x+6,y+10,CELL-14,CELL-14,8);
-      // color
-      ctx.fillStyle = p.color;
-      roundRectFill(x+4,y+4,CELL-18,CELL-18,8);
-      // shine
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.fillRect(x+10,y+10,(CELL-28)*0.6,8);
+    const baseX = p.x, baseY = p.y;
+    for(let r=0;r<shape.length;r++){
+      for(let c=0;c<shape[0].length;c++){
+        if(shape[r][c]){
+          const x = baseX + c*CELL, y = baseY + r*CELL;
+          ctx.fillStyle='rgba(0,0,0,0.36)'; roundRectFill(x+6,y+10,CELL-14,CELL-14,8);
+          ctx.fillStyle = p.color; roundRectFill(x+4,y+4,CELL-18,CELL-18,8);
+          ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(x+10,y+10,(CELL-28)*0.6,8);
+        }
+      }
     }
-
-    // preview overlay if dragging -> show ghost on grid
     if(isDragging){
       const col = Math.floor((p.x - OFFSET)/CELL);
       const row = Math.floor((p.y - OFFSET)/CELL);
       const valid = canPlaceAt(p.shape,row,col);
-      if(row !== null && col !== null){
+      if(row!==null && col!==null){
         for(let r=0;r<p.shape.length;r++) for(let c=0;c<p.shape[0].length;c++) if(p.shape[r][c]){
           const gx = OFFSET + (col+c)*CELL + 4;
           const gy = OFFSET + (row+r)*CELL + 4;
           ctx.globalAlpha = valid ? 0.28 : 0.16;
           ctx.fillStyle = valid ? '#9ef6ff' : '#ff9e9e';
-          roundRectFill(gx, gy, CELL-8, CELL-8, 6);
+          roundRectFill(gx,gy,CELL-8,CELL-8,6);
           ctx.globalAlpha = 1;
         }
       }
     }
   }
 
-  // placement check
+  // check placement
   function canPlaceAt(shape,row,col){
-    if(row===null||col===null) return false;
-    for(let r=0;r<shape.length;r++) for(let c=0;c<shape[0].length;c++) if(shape[r][c]){
-      const rr = row+r, cc = col+c;
-      if(rr<0||cc<0||rr>=GRID||cc>=GRID) return false;
-      if(grid[rr][cc]) return false;
+    if(typeof row !== 'number' || typeof col !== 'number') return false;
+    for(let r=0;r<shape.length;r++){
+      for(let c=0;c<shape[0].length;c++){
+        if(shape[r][c]){
+          const rr = row + r, cc = col + c;
+          if(rr<0||cc<0||rr>=GRID||cc>=GRID) return false;
+          if(grid[rr][cc]) return false;
+        }
+      }
     }
     return true;
   }
 
-  // place piece
+  // place piece and scoring
   function placePieceAt(p,row,col){
-    // save history
+    // record history for undo
     historyStack.push({grid:deepClone(grid),score,combo,fakeLossesRemaining});
     if(historyStack.length>6) historyStack.shift();
 
-    const placedCells = [];
+    const placedCells=[];
     for(let r=0;r<p.shape.length;r++) for(let c=0;c<p.shape[0].length;c++) if(p.shape[r][c]){
-      const rr = row+r, cc = col+c;
-      grid[rr][cc] = p.color;
-      placedCells.push({r:rr,c:cc});
+      const rr=row+r, cc=col+c; grid[rr][cc]=p.color; placedCells.push({r:rr,c:cc});
     }
-    playClick();
 
-    // score: + per placed cell
+    // score by number of placed cells
     const cellsPlaced = placedCells.length;
     const basePts = cellsPlaced * 8;
     score += basePts;
     scoreEl.textContent = score;
 
+    playPlace();
+
     // clear lines
     const pre = deepClone(grid);
     const cleared = doClearLines();
     if(cleared.count>0){
-      // spawn particles
       const spawnCells = [];
       cleared.rows.forEach(r=>{ for(let c=0;c<GRID;c++) spawnCells.push({r,c,color:pre[r][c]||'#fff'}); });
       cleared.cols.forEach(c=>{ for(let r=0;r<GRID;r++) spawnCells.push({r,c,color:pre[r][c]||'#fff'}); });
@@ -394,117 +384,92 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
       cleared.rows.forEach(r=>anims.push({type:'row',index:r,start:now,dur:900}));
       cleared.cols.forEach(c=>anims.push({type:'col',index:c,start:now,dur:900}));
 
-      // scoring: cleared.count * 12 * linesCount * comboMultiplier
+      // combo handling: combo grows if consecutive clears
+      combo = Math.max(1, combo) + (Math.max(cleared.rows.length+cleared.cols.length,1)-1);
+      comboEl.textContent = combo;
       const linesCount = Math.max(cleared.rows.length+cleared.cols.length,1);
-      combo = Math.max(1,combo)+ (linesCount-1);
       const pts = cleared.count * 12 * linesCount * combo;
       score += pts;
+      scoreEl.textContent = score;
       playClear();
       showToast(`🔥 Combo x${combo} +${pts} pts`,1400);
     } else {
-      combo = 0;
+      combo = 0; comboEl.textContent = combo;
     }
 
     // update highscore if needed
-    if(score > highScore){ highScore = score; localStorage.setItem('bb_high', String(highScore)); updateHighUI(); }
+    saveHighIfNeeded();
 
-    // refill pieces if needed
+    // after placing, refill pieces if empty
     if(pieces.length === 0) generatePieces();
-    else if(!hasAnyMoveForPieces(pieces)){ // if there are pieces left but no moves -> generate new set (to avoid immediate loss)
-      generatePieces();
-    }
-
-    // check lose condition (no moves)
-    if(!hasAnyMoveForPieces(pieces)){
+    else if(!hasAnyMoveForPieces(pieces)) {
+      // If no possible moves with remaining pieces -> handle no-move (fake loss)
       handleNoMoves();
     }
   }
 
-  // clearing rows/cols
+  // clear rows/cols
   function doClearLines(){
     const rowsCleared = [], colsCleared = [];
-    // rows
-    for(let r=0;r<GRID;r++){
-      if(grid[r].every(cell=>cell)) rowsCleared.push(r);
-    }
-    // cols
-    for(let c=0;c<GRID;c++){
-      let full=true; for(let r=0;r<GRID;r++){ if(!grid[r][c]) { full=false; break; } }
-      if(full) colsCleared.push(c);
-    }
-    // clear them
-    const map = {};
+    for(let r=0;r<GRID;r++){ if(grid[r].every(cell=>cell)) rowsCleared.push(r); }
+    for(let c=0;c<GRID;c++){ let full=true; for(let r=0;r<GRID;r++){ if(!grid[r][c]){ full=false; break; }} if(full) colsCleared.push(c); }
+    const map={};
     rowsCleared.forEach(r=>{ for(let c=0;c<GRID;c++) map[`${r}_${c}`]=true; });
     colsCleared.forEach(c=>{ for(let r=0;r<GRID;r++) map[`${r}_${c}`]=true; });
-    const keys = Object.keys(map);
+    const keys=Object.keys(map);
     keys.forEach(k=>{ const [r,c]=k.split('_').map(Number); grid[r][c]=0; });
-    // update score for clears handled in placePieceAt
-    return {rows:rowsCleared, cols:colsCleared, count: keys.length};
+    if(keys.length){
+      const linesCount = Math.max(rowsCleared.length + colsCleared.length,1);
+      const pts = keys.length * 12 * linesCount;
+      // base pts handled in placePieceAt (we add combo pts there)
+      return {rows:rowsCleared,cols:colsCleared,count:keys.length};
+    }
+    return {rows:rowsCleared,cols:colsCleared,count:0};
   }
 
-  // particles
-  let particlesArr = [];
+  // particles spawn
   function spawnParticlesAtCell(r,c,color){
     const baseX = OFFSET + c*CELL + CELL/2;
     const baseY = OFFSET + r*CELL + CELL/2;
     const targetX = OFFSET + BOARD_W + 60;
     const n = 6;
     for(let i=0;i<n;i++){
-      particlesArr.push({
+      particles.push({
         x: baseX, y: baseY,
         vx: (targetX - baseX)/40 + (Math.random()-0.5)*2,
         vy: (Math.random()-0.5)*2,
         born: performance.now(), life: 700 + Math.random()*400, color
       });
     }
-    if(particlesArr.length > 600) particlesArr.splice(0, particlesArr.length-500);
+    if(particles.length>800) particles.splice(0, particles.length-600);
   }
-
   function updateAndDrawParticles(){
     const now = performance.now();
-    for(let i=particlesArr.length-1;i>=0;i--){
-      const p = particlesArr[i];
-      const t = now - p.born;
-      if(t > p.life){ particlesArr.splice(i,1); continue; }
-      p.x += p.vx; p.y += p.vy;
-      const a = 1 - t/p.life;
-      ctx.globalAlpha = a;
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x-3,p.y-3,6,6);
-      ctx.globalAlpha = 1;
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i]; const t=now-p.born;
+      if(t>p.life){ particles.splice(i,1); continue; }
+      p.x += p.vx; p.y += p.vy; const a=1 - t/p.life;
+      ctx.globalAlpha = a; ctx.fillStyle=p.color; ctx.fillRect(p.x-3,p.y-3,6,6); ctx.globalAlpha=1;
     }
   }
 
-  // animations
+  // animations/visuals
   function spawnShake(){ canvasWrap.classList.add('shake'); setTimeout(()=>canvasWrap.classList.remove('shake'),360); }
 
-  // check any moves for pieces across board with rotations
+  // check any move for pieces (with rotations)
   function hasAnyMoveForPieces(checkPieces){
     for(const p of checkPieces){
       let s = deepClone(p.shape);
       for(let rot=0;rot<4;rot++){
-        for(let r=0;r<GRID;r++){
-          for(let c=0;c<GRID;c++){
-            if(canPlaceAt(s,r,c)) return true;
-          }
-        }
+        for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++) if(canPlaceAt(s,r,c)) return true;
         s = rotateMatrix(s);
       }
     }
     return false;
   }
 
-  // rotate utilities
-  function rotateMatrix(m){
-    const R = m.length, C = m[0].length;
-    const out = Array(C).fill().map(()=>Array(R).fill(0));
-    for(let r=0;r<R;r++) for(let c=0;c<C;c++) out[c][R-1-r] = m[r][c];
-    return out;
-  }
-
-  // no-move handler -> fake loss
+  // handle no moves -> fake loss
   function handleNoMoves(){
-    // decrement fakeLossesRemaining
     fakeLossesRemaining--;
     livesEl.textContent = fakeLossesRemaining;
     playFail();
@@ -512,22 +477,29 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
     // clear board but keep score
     resetGrid();
     // respawn pieces
-    generatePieces();
-    // if reached 0 -> final loss
-    if(fakeLossesRemaining <= 0){
+    refillBag(); generatePieces();
+    // show continue button if still have fake losses left
+    if(fakeLossesRemaining > 0){
+      continueBtn.style.display = 'block';
+    } else {
+      // final loss
       showToast('💀 Thua thật — Điểm về 0', 2200);
-      score = 0;
-      scoreEl.textContent = score;
-      fakeLossesRemaining = 5;
-      livesEl.textContent = fakeLossesRemaining;
-      localStorage.setItem('bb_high', String(highScore)); // ensure high saved
-      // update local storage life resets
+      score = 0; scoreEl.textContent = score;
+      fakeLossesRemaining = 5; livesEl.textContent = fakeLossesRemaining;
+      localStorage.setItem('bb_high', String(highScore));
+      // hide continue button
+      continueBtn.style.display = 'none';
     }
   }
 
-  // double-click rotate for next-slot: implemented in populateNextRow()
+  // continue button handler (deduct one fake loss and continue)
+  continueBtn.addEventListener('click', ()=>{
+    continueBtn.style.display = 'none';
+    // allow player to continue with current fakeLossesRemaining (already decremented in handleNoMoves)
+    showToast('Tiếp tục — chơi tiếp',1200);
+  });
 
-  // spawn pieces UI
+  // next-row populate with double-click rotate
   function populateNextRow(){
     nextRow.innerHTML = '';
     for(let i=0;i<3;i++){
@@ -541,24 +513,19 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
       const offsetX = Math.floor((86 - p.shape[0].length*smallCell)/2);
       const offsetY = Math.floor((86 - p.shape.length*smallCell)/2);
       for(let r=0;r<p.shape.length;r++) for(let c0=0;c0<p.shape[0].length;c0++) if(p.shape[r][c0]){
-        g.fillStyle = p.color;
-        g.fillRect(offsetX + c0*smallCell + 2, offsetY + r*smallCell + 2, smallCell-4, smallCell-4);
+        g.fillStyle = p.color; g.fillRect(offsetX + c0*smallCell + 2, offsetY + r*smallCell + 2, smallCell-4, smallCell-4);
       }
       slot.appendChild(c);
-      // enable dragging from slot
+      // dragging from slot
       slot.addEventListener('pointerdown', (e)=>{
         if(gameOver) return;
-        // start dragging clone
+        if(audioCtx.state === 'suspended') audioCtx.resume();
         const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-        dragging = { shape: deepClone(p.shape), color: p.color, x: e.clientX - rect.left - smallCell, y: e.clientY - rect.top - smallCell, spawnIndex:i };
-        // remove from pieces so slot empties visually
-        pieces.splice(i,1);
-        populateNextRow();
-        draw();
+        dragging = { shape: deepClone(p.shape), color: p.color, x: e.clientX - rect.left - 28, y: e.clientY - rect.top - 28, spawnIndex:i, spawnX: p.spawnX, spawnY: p.spawnY };
+        pieces.splice(i,1); populateNextRow(); draw();
         e.target.setPointerCapture?.(e.pointerId);
       });
-      // double click rotate
+      // double click rotate in slot
       slot.addEventListener('dblclick', (e)=>{
         pieces[i].shape = rotateMatrix(pieces[i].shape);
         populateNextRow();
@@ -567,16 +534,15 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
     }
   }
 
-  // pointer events on canvas for drag
+  // pointer events
   let pointerOffset = {x:0,y:0};
-
   canvas.addEventListener('pointerdown', (e)=>{
     if(gameOver) return;
     if(audioCtx.state === 'suspended') audioCtx.resume();
-    // If click on a waiting slot canvas, handled above. Here we allow picking up a placed waiting piece with dragging? Not required.
+    // pick from waiting pieces area if click in that area (handled by slot), else nothing
   });
 
-  window.addEventListener('pointermove', (e)=> {
+  window.addEventListener('pointermove', (e)=>{
     if(!dragging) return;
     const rect = canvas.getBoundingClientRect();
     dragging.x = e.clientX - rect.left - CELL/2;
@@ -591,75 +557,61 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
     const row = Math.floor((dragging.y - OFFSET) / CELL);
     if(canPlaceAt(dragging.shape,row,col)){
       placePieceAt(dragging,row,col);
-      // if pieces empty fill new pieces
+      // refill pieces if needed
       if(pieces.length === 0) generatePieces();
+      else if(!hasAnyMoveForPieces(pieces)) handleNoMoves();
     } else {
       // animate return to next area
       spawnShake();
-      // restore piece to pieces array at end
-      pieces.push({ shape: deepClone(dragging.shape), color: dragging.color, x: OFFSET + 60 + pieces.length*180, y: OFFSET + BOARD_H + 36, spawnX: OFFSET + 60 + pieces.length*180, spawnY: OFFSET + BOARD_H + 36 });
-      populateNextRow();
+      animateReturnAndRestore(dragging);
     }
-    dragging = null;
-    draw();
+    dragging = null; populateNextRow(); draw();
   });
 
-  // rotate via double click on canvas while dragging (alternate)
+  // rotate while dragging by double click on canvas (double click anywhere while dragging)
+  let lastClickTime = 0;
   canvas.addEventListener('dblclick', (e)=>{
     if(!dragging) return;
     dragging.shape = rotateMatrix(dragging.shape);
     draw();
   });
 
-  // check any move for one piece (utility)
-  function hasMoveForPiece(piece){
-    let s = deepClone(piece.shape);
-    for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++) if(canPlaceAt(s,r,c)) return true;
-    return false;
-  }
+  // also allow double-click (rapid pointerdown) on slot canvas element handled above
 
-  // periodic render loop
-  function loop(){
-    draw();
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
-
-  // rainbow when grid empty
-  function drawRainbow(){
-    for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++){
-      const hue = (c + r*GRID + Math.floor(performance.now()/80)) % 360;
-      ctx.fillStyle = `hsl(${hue},80%,55%)`;
-      const x = OFFSET + c*CELL, y = OFFSET + r*CELL;
-      roundRectFill(x+4,y+4,CELL-8,CELL-8,6);
+  // return animation when invalid placed
+  function animateReturnAndRestore(obj){
+    const from = {x: obj.x, y: obj.y};
+    const to = {x: obj.spawnX || (OFFSET+60 + pieces.length*180), y: obj.spawnY || (OFFSET+BOARD_H + 36)};
+    const start = performance.now();
+    const dur = 260;
+    function anim(now){
+      const t = Math.min((now-start)/dur,1);
+      const ease = t<.5 ? 2*t*t : -1 + (4 - 2*t)*t;
+      obj.x = from.x + (to.x - from.x) * ease;
+      obj.y = from.y + (to.y - from.y) * ease;
+      draw();
+      if(t < 1) requestAnimationFrame(anim);
+      else {
+        pieces.push({ shape: obj.shape, color: obj.color, x: to.x, y: to.y, spawnX: to.x, spawnY: to.y });
+        populateNextRow(); dragging = null; draw();
+      }
     }
+    requestAnimationFrame(anim);
   }
 
-  // toast
+  // trigger shake
+  function triggerShake(){ canvasWrap.classList.add('shake'); setTimeout(()=> canvasWrap.classList.remove('shake'),360); }
+
+  // toast helper
   function showToast(text,dur=1400){
-    const d = document.createElement('div');
-    d.className = 'toast'; d.textContent = text; toastWrap.appendChild(d);
+    const d = document.createElement('div'); d.className='toast'; d.textContent=text; toastWrap.appendChild(d);
     requestAnimationFrame(()=> d.classList.add('show'));
     setTimeout(()=> { d.classList.remove('show'); setTimeout(()=> d.remove(),300); }, dur);
   }
 
-  // reset & init
-  function resetAll(){
-    resetGrid();
-    refillBag();
-    generatePieces();
-    score = 0; scoreEl.textContent = score;
-    fakeLossesRemaining = 5; livesEl.textContent = fakeLossesRemaining;
-    combo = 0; comboEl.textContent = combo;
-    historyStack = [];
-    undoCount = 1;
-    updateHighUI();
-    draw();
-  }
-
   // undo
   undoBtn.addEventListener('click', ()=>{
-    if(undoCount<=0 || historyStack.length===0) { showToast('Không thể undo'); return; }
+    if(undoCount<=0 || historyStack.length===0){ showToast('Không thể undo'); return; }
     const last = historyStack.pop();
     grid = deepClone(last.grid);
     score = last.score; scoreEl.textContent = score;
@@ -670,7 +622,7 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
   });
 
   // controls
-  resetBtn.addEventListener('click', ()=> { resetAll(); });
+  resetBtn.addEventListener('click', ()=> resetAll());
   muteBtn.addEventListener('click', ()=>{
     isMuted = !isMuted;
     if(isMuted){ master.gain.setValueAtTime(0, audioCtx.currentTime); muteBtn.textContent='Muted'; muteBtn.style.background='#6b7280'; }
@@ -678,12 +630,9 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
   });
 
   // highscore
-  function loadHigh(){ highScore = parseInt(localStorage.getItem('bb_high')||'0',10); updateHighUI(); }
-  function updateHighUI(){
-    highEl.textContent = highScore;
-    if(score >= highScore && highScore>0) crownEl.style.display='inline';
-    else crownEl.style.display = (score >= highScore && highScore===0) ? 'inline' : (localStorage.getItem('bb_holder') === (localStorage.getItem('bb_name')||'') ? 'inline':'none');
-  }
+  function loadHigh(){ highScore = parseInt(localStorage.getItem('bb_high')||'0',10); if(isNaN(highScore)) highScore = 0; highEl.textContent = highScore; updateCrown(); }
+  function saveHighIfNeeded(){ if(score > highScore){ highScore = score; localStorage.setItem('bb_high', String(highScore)); localStorage.setItem('bb_holder', localStorage.getItem('bb_name')||'Guest'); highEl.textContent = highScore; showToast('🏆 New High Score!', 1600); updateCrown(); } }
+  function updateCrown(){ const holder = localStorage.getItem('bb_holder') || ''; const name = localStorage.getItem('bb_name') || ''; crownEl.style.display = (score >= highScore && highScore>0) || (holder === name && highScore>0) ? 'inline' : 'none'; }
 
   // name modal
   const nameModal = document.getElementById('nameModal');
@@ -708,19 +657,39 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
     nameModal.classList.remove('show');
   });
 
-  // persistence
-  function saveHighIfNeeded(){
-    const prevHigh = parseInt(localStorage.getItem('bb_high')||'0',10);
-    if(score > prevHigh){
-      localStorage.setItem('bb_high', String(score));
-      localStorage.setItem('bb_holder', localStorage.getItem('bb_name') || 'Guest');
-      highScore = score;
-      updateHighUI();
-      showToast('🏆 New High Score!', 1600);
-    }
+  // reset and init
+  function resetAll(){
+    resetGrid();
+    refillBag();
+    generatePieces();
+    score = 0; scoreEl.textContent = score;
+    fakeLossesRemaining = 5; livesEl.textContent = fakeLossesRemaining;
+    combo = 0; comboEl.textContent = combo;
+    historyStack = []; undoCount = 1;
+    loadHigh();
+    draw();
   }
 
-  // initial boot
+  // checking moves for a single piece (utility)
+  function hasMoveForPiece(piece){
+    let s = deepClone(piece.shape);
+    for(let rot=0;rot<4;rot++){
+      for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++) if(canPlaceAt(s,r,c)) return true;
+      s = rotateMatrix(s);
+    }
+    return false;
+  }
+
+  // spawn pieces UI (initial)
+  function populateNextRowInitial(){
+    populateNextRow();
+  }
+
+  // periodic loop
+  function loop(){ draw(); requestAnimationFrame(loop); }
+  requestAnimationFrame(loop);
+
+  // init bootstrap
   refillBag();
   generatePieces();
   loadHigh();
@@ -728,7 +697,7 @@ canvas{background:#06101a;border-radius:8px;display:block;touch-action:none}
   draw();
 
   // expose for debug
-  window.BB = { grid, pieces, resetAll };
+  window.BD = { grid, pieces, resetAll };
 
 })();
 </script>
