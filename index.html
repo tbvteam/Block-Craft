@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Game Xếp Block Nâng Cao</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 30px;
+      padding: 20px;
+    }
+    canvas {
+      background: #222;
+      border: 3px solid #555;
+    }
+    #info {
+      max-width: 200px;
+    }
+    .crown {
+      font-size: 20px;
+      color: gold;
+    }
+    button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      background: #333;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="300" height="600"></canvas>
+  <div id="info">
+    <h2>Block Game</h2>
+    <p>Người chơi: <span id="playerName"></span></p>
+    <p>Điểm: <span id="score">0</span></p>
+    <p>
+      Kỷ lục: <span id="highScore">0</span>
+      <span class="crown">👑</span>
+    </p>
+    <p>Lượt thua còn lại: <span id="lives">5</span></p>
+    <button onclick="restartGame()">Chơi lại</button>
+  </div>
+
+  <script>
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const ROWS = 20, COLS = 10, SIZE = 30;
+  let grid = createGrid();
+  let score = 0, combo = 0, lives = 5;
+  let currentPiece = null;
+  let dropInterval = 1000, lastDrop = 0;
+  let gameOver = false;
+  let rainbowMode = false;
+
+  // Shapes (thêm cả bậc thang)
+  const SHAPES = [
+    [[1,1,1,1]],                   // I
+    [[1,1],[1,1]],                 // O
+    [[0,1,0],[1,1,1]],             // T
+    [[1,0,0],[1,1,1]],             // L
+    [[0,0,1],[1,1,1]],             // J
+    [[0,1,1],[1,1,0]],             // S
+    [[1,1,0],[0,1,1]],             // Z
+    [[1,1,0],[0,1,1],[0,0,1]]      // Bậc thang (stairs)
+  ];
+
+  const COLORS = ["cyan","yellow","purple","orange","blue","green","red","pink"];
+
+  // LocalStorage: tên + highscore
+  let playerName = localStorage.getItem("playerName");
+  if (!playerName) {
+    playerName = prompt("Nhập tên của bạn:");
+    localStorage.setItem("playerName", playerName);
+  }
+  document.getElementById("playerName").textContent = playerName;
+  let highScore = parseInt(localStorage.getItem("highScore") || "0");
+  document.getElementById("highScore").textContent = highScore;
+
+  // Grid
+  function createGrid() {
+    return Array.from({length: ROWS}, () => Array(COLS).fill(null));
+  }
+
+  // Piece
+  class Piece {
+    constructor(shape, color) {
+      this.shape = shape;
+      this.color = color;
+      this.x = Math.floor(COLS/2) - Math.floor(shape[0].length/2);
+      this.y = 0;
+    }
+    draw() {
+      this.shape.forEach((row,i) => row.forEach((cell,j)=>{
+        if(cell){
+          ctx.fillStyle = this.color;
+          ctx.fillRect((this.x+j)*SIZE, (this.y+i)*SIZE, SIZE, SIZE);
+          ctx.strokeStyle="#111";
+          ctx.strokeRect((this.x+j)*SIZE, (this.y+i)*SIZE, SIZE, SIZE);
+        }
+      }));
+    }
+    collide() {
+      return this.shape.some((row,i)=>row.some((cell,j)=>{
+        if(cell){
+          let nx = this.x+j, ny = this.y+i;
+          if(nx<0||nx>=COLS||ny>=ROWS) return true;
+          if(ny>=0 && grid[ny][nx]) return true;
+        }
+        return false;
+      }));
+    }
+    move(dx,dy) {
+      this.x+=dx; this.y+=dy;
+      if(this.collide()){ this.x-=dx; this.y-=dy; return false;}
+      return true;
+    }
+    rotate() {
+      let m = this.shape, N=m.length;
+      let r = Array.from({length:N},(_,i)=>Array(N).fill(0));
+      for(let i=0;i<N;i++)for(let j=0;j<N;j++)r[j][N-1-i]=m[i][j];
+      let old=this.shape; this.shape=r;
+      if(this.collide()) this.shape=old;
+    }
+    lock() {
+      this.shape.forEach((row,i)=>row.forEach((cell,j)=>{
+        if(cell){
+          let nx=this.x+j, ny=this.y+i;
+          if(ny>=0) grid[ny][nx]=this.color;
+        }
+      }));
+      // Cộng điểm theo số ô
+      let cells = this.shape.flat().filter(c=>c).length;
+      score += cells; updateScore();
+      clearLines();
+      spawnPiece();
+    }
+  }
+
+  function drawGrid() {
+    ctx.fillStyle="#222";
+    ctx.fillRect(0,0,COLS*SIZE,ROWS*SIZE);
+    for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
+      if(grid[y][x]){
+        ctx.fillStyle=grid[y][x];
+        ctx.fillRect(x*SIZE,y*SIZE,SIZE,SIZE);
+        ctx.strokeStyle="#111";
+        ctx.strokeRect(x*SIZE,y*SIZE,SIZE,SIZE);
+      }
+    }
+  }
+
+  function spawnPiece() {
+    const idx=Math.floor(Math.random()*SHAPES.length);
+    currentPiece=new Piece(SHAPES[idx],COLORS[idx]);
+    if(currentPiece.collide()){ // không spawn được
+      lives--;
+      document.getElementById("lives").textContent=lives;
+      if(lives>0){
+        grid=createGrid(); // reset lưới
+        currentPiece=null;
+        rainbowMode=true;
+      } else {
+        gameOver=true;
+        if(score>highScore){
+          highScore=score;
+          localStorage.setItem("highScore",highScore);
+        }
+      }
+    }
+  }
+
+  function clearLines() {
+    let lines=0;
+    for(let y=ROWS-1;y>=0;y--){
+      if(grid[y].every(cell=>cell)){
+        grid.splice(y,1);
+        grid.unshift(Array(COLS).fill(null));
+        lines++; y++;
+      }
+    }
+    if(lines>0){
+      combo++;
+      score+=lines*10*combo;
+    } else combo=0;
+    updateScore();
+  }
+
+  function updateScore(){
+    document.getElementById("score").textContent=score;
+    if(score>highScore){
+      highScore=score;
+      localStorage.setItem("highScore",highScore);
+      document.getElementById("highScore").textContent=highScore;
+    }
+  }
+
+  // Hiệu ứng cầu vồng
+  function drawRainbow(){
+    for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
+      let hue=(x+y*COLS+Date.now()/50)%360;
+      ctx.fillStyle=`hsl(${hue},100%,50%)`;
+      ctx.fillRect(x*SIZE,y*SIZE,SIZE,SIZE);
+    }
+  }
+
+  // Loop
+  function update(time=0){
+    if(gameOver){ ctx.fillStyle="white"; ctx.font="30px Arial"; ctx.fillText("GAME OVER",50,300); return;}
+    if(rainbowMode){ drawRainbow(); }
+    else{
+      drawGrid();
+      if(currentPiece) currentPiece.draw();
+      if(time-lastDrop>dropInterval){
+        if(!currentPiece.move(0,1)) currentPiece.lock();
+        lastDrop=time;
+      }
+    }
+    requestAnimationFrame(update);
+  }
+
+  // Input
+  document.addEventListener("keydown",e=>{
+    if(!currentPiece) return;
+    if(e.key==="ArrowLeft") currentPiece.move(-1,0);
+    if(e.key==="ArrowRight") currentPiece.move(1,0);
+    if(e.key==="ArrowDown") if(!currentPiece.move(0,1)) currentPiece.lock();
+  });
+
+  // Double click xoay
+  canvas.addEventListener("dblclick",()=>{
+    if(currentPiece) currentPiece.rotate();
+  });
+
+  function restartGame(){
+    score=0; lives=5; combo=0;
+    document.getElementById("score").textContent=0;
+    document.getElementById("lives").textContent=5;
+    grid=createGrid();
+    spawnPiece();
+    gameOver=false; rainbowMode=false;
+  }
+
+  restartGame();
+  update();
+  </script>
+</body>
+</html>
